@@ -42,6 +42,22 @@ async function getDb(): Promise<Database> {
   return dbInstance;
 }
 
+function validateTransactionType(type: string): asserts type is TransactionType {
+  if (type !== "debt" && type !== "payment") {
+    throw new Error("Transaction type must be either 'debt' or 'payment'.");
+  }
+}
+
+function validateTransactionAmount(amount: number): void {
+  if (!Number.isFinite(amount) || Number.isNaN(amount)) {
+    throw new Error("Transaction amount must be a valid number.");
+  }
+
+  if (amount <= 0) {
+    throw new Error("Transaction amount must be greater than 0.");
+  }
+}
+
 export async function initializeDatabase(): Promise<void> {
   const db = await getDb();
 
@@ -72,16 +88,25 @@ export async function initializeDatabase(): Promise<void> {
   await db.execute(
     "CREATE INDEX IF NOT EXISTS idx_transactions_customer_id ON transactions(customer_id);",
   );
+
+  await db.execute(
+    "CREATE INDEX IF NOT EXISTS idx_customers_name ON customers(name);",
+  );
 }
 
 export async function createCustomer(
   input: NewCustomerInput,
 ): Promise<number> {
   const db = await getDb();
+  const trimmedName = input.name.trim();
+
+  if (!trimmedName) {
+    throw new Error("Customer name cannot be empty.");
+  }
 
   const result = await db.execute(
     "INSERT INTO customers (name, phone, note) VALUES ($1, $2, $3);",
-    [input.name, input.phone ?? null, input.note ?? null],
+    [trimmedName, input.phone ?? null, input.note ?? null],
   );
 
   if (result.lastInsertId == null) {
@@ -103,6 +128,9 @@ export async function addTransaction(
   input: NewTransactionInput,
 ): Promise<number> {
   const db = await getDb();
+
+  validateTransactionType(input.type);
+  validateTransactionAmount(input.amount);
 
   const result = await db.execute(
     "INSERT INTO transactions (customer_id, type, amount, note) VALUES ($1, $2, $3, $4);",
