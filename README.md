@@ -1,38 +1,72 @@
 # EsnafOS
 
-EsnafOS, küçük işletmeler için geliştirilen açık kaynak ve ücretsiz bir masaüstü yönetim sistemidir.
+**Türkçe Özet:** EsnafOS; küçük işletmeler, esnaf, nalbur ve yerel dükkanlar için geliştirilen ücretsiz, açık kaynak ve offline-first bir masaüstü uygulamasıdır. Müşteri, veresiye/borç-alacak, ödeme, satış-sipariş fişleri, stok, günlük kasa özeti ve yerel yedek süreçlerini internet zorunluluğu olmadan yönetmeyi hedefler.
 
-Amaç; esnafın veresiye, satış, sipariş, müşteri, stok ve kasa takibini basit, güvenilir ve offline şekilde yapabilmesidir.
+EsnafOS is a free, open-source, offline-first desktop app for local businesses such as small shops, tradesmen, and hardware stores.
 
-## Hedef
+The product is focused on practical day-to-day operations:
 
-EsnafOS; internet bağlantısı, sunucu veya zorunlu üyelik gerektirmeden çalışır. Veriler kullanıcının kendi bilgisayarında tutulur.
+- Customer tracking
+- Credit/debt ledger
+- Payments
+- Internal sales slips
+- Internal order slips
+- Stock/inventory
+- Daily cash summary
+- Local backup and restore
 
-## İlk Sürüm Özellikleri
+> ⚠️ Generated slips are **internal business records only** and are **not official financial documents**.
 
-- Müşteri kaydı
-- Veresiye borç/alacak takibi
-- Ödeme alma
-- Satış fişi oluşturma
-- Sipariş fişi oluşturma
-- Ürün ve stok takibi
-- Günlük kasa özeti
-- PDF çıktı
-- Yedek alma ve geri yükleme
+## Offline-First Principle
 
-## Önemli Not
+EsnafOS is designed to run without internet.
 
-EsnafOS tarafından oluşturulan fişler resmi mali belge yerine geçmez. Uygulama, işletme içi takip ve kayıt amacıyla geliştirilmiştir.
+- No SaaS architecture
+- No cloud sync
+- No backend server
+- No forced accounts/authentication
+- Data stays on the user’s own computer
 
-## Teknoloji
+## Technology Stack
 
-- Tauri
+- Tauri v2
 - React
 - TypeScript
-- SQLite
-- Rust
-- TailwindCSS
+- SQLite (planned, not implemented yet)
+- Rust (Tauri runtime)
 
-## Lisans
+## Development Setup
 
-Bu proje AGPL-3.0 lisansı ile açık kaynak olarak yayınlanır.
+### Prerequisites
+
+Follow official Tauri prerequisite instructions for your operating system:
+
+- https://tauri.app/start/prerequisites/
+
+### Run locally
+
+```bash
+npm install
+npm run tauri dev
+```
+
+### Build
+
+```bash
+npm run build
+npm run tauri build
+```
+
+## Current Status
+
+This repository currently contains the initial application shell:
+
+- Sidebar navigation
+- Empty pages for core modules
+- Basic frontend structure for next feature tasks
+
+No database implementation and no business logic are included yet.
+
+## License
+
+AGPL-3.0
