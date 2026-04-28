@@ -92,33 +92,33 @@ export function DashboardPage({ dbReady, dbError }: DashboardPageProps) {
 
   return (
     <section className="page">
-      <h1>Dashboard</h1>
-      <p>Business summary from local SQLite data.</p>
+      <h1>Genel Bakış</h1>
+      <p>Yerel verilerden işletme özeti.</p>
 
-      {!dbReady && !dbError && <p className="status">Preparing local database...</p>}
-      {dbError && <p className="status error">Database error: {dbError}</p>}
-      {loading && dbReady && !dbError && <p className="status">Loading summary...</p>}
+      {!dbReady && !dbError && <p className="status">Yerel veritabanı hazırlanıyor...</p>}
+      {dbError && <p className="status error">Veritabanı hatası: {dbError}</p>}
+      {loading && dbReady && !dbError && <p className="status">Özet yükleniyor...</p>}
       {error && <p className="status error">{error}</p>}
 
       {dbReady && !dbError && !loading && !error && (
-        <div className="dashboard-cards" aria-label="Dashboard summary cards">
+        <div className="dashboard-cards" aria-label="Genel Bakış summary cards">
           <article className="summary-card">
-            <h2>Total Customers</h2>
+            <h2>Toplam Müşteri</h2>
             <p>{summary.totalCustomers}</p>
           </article>
 
           <article className="summary-card">
-            <h2>Total Debt</h2>
+            <h2>Toplam Borç</h2>
             <p>{moneyFormatter.format(summary.totalDebt)}</p>
           </article>
 
           <article className="summary-card">
-            <h2>Total Payment</h2>
+            <h2>Toplam Ödeme</h2>
             <p>{moneyFormatter.format(summary.totalPayment)}</p>
           </article>
 
           <article className="summary-card">
-            <h2>Net Receivable</h2>
+            <h2>Net Alacak</h2>
             <p>{moneyFormatter.format(netReceivable)}</p>
           </article>
         </div>
