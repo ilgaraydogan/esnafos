@@ -1,5 +1,7 @@
 # EsnafOS
 
+**Türkçe Özet:** EsnafOS; küçük işletmeler, esnaf, nalbur ve yerel dükkanlar için geliştirilen ücretsiz, açık kaynak ve offline-first bir masaüstü uygulamasıdır. Müşteri, veresiye/borç-alacak, ödeme, satış-sipariş fişleri, stok, günlük kasa özeti ve yerel yedek süreçlerini internet zorunluluğu olmadan yönetmeyi hedefler.
+
 EsnafOS is a free, open-source, offline-first desktop app for local businesses such as small shops, tradesmen, and hardware stores.
 
 The product is focused on practical day-to-day operations:
