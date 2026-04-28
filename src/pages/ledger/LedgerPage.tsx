@@ -26,9 +26,9 @@ const initialLedgerFormState: LedgerFormState = {
 };
 
 function formatAmount(value: number): string {
-  return value.toLocaleString(undefined, {
+  return value.toLocaleString("tr-TR", {
     style: "currency",
-    currency: "USD",
+    currency: "TRY",
   });
 }
 
@@ -39,7 +39,11 @@ function formatCreatedAt(value: string): string {
     return value;
   }
 
-  return date.toLocaleString();
+  return date.toLocaleString("tr-TR");
+}
+
+function formatTransactionType(type: TransactionType): string {
+  return type === "debt" ? "Borç" : "Ödeme";
 }
 
 export function LedgerPage({ dbReady, dbError }: LedgerPageProps) {
@@ -54,6 +58,9 @@ export function LedgerPage({ dbReady, dbError }: LedgerPageProps) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const selectedCustomerId = Number(formState.customerId);
+  const selectedCustomer = customers.find(
+    (customer) => customer.id === selectedCustomerId,
+  );
 
   const balance = useMemo(
     () =>
@@ -76,7 +83,7 @@ export function LedgerPage({ dbReady, dbError }: LedgerPageProps) {
       setErrorMessage(
         error instanceof Error
           ? error.message
-          : "Failed to load transactions for the selected customer.",
+          : "Seçili müşteri işlemleri yüklenemedi.",
       );
       setTransactions([]);
     } finally {
@@ -112,7 +119,7 @@ export function LedgerPage({ dbReady, dbError }: LedgerPageProps) {
       });
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : "Failed to load customers.",
+        error instanceof Error ? error.message : "Müşteriler yüklenemedi.",
       );
       setCustomers([]);
       setTransactions([]);
@@ -139,16 +146,20 @@ export function LedgerPage({ dbReady, dbError }: LedgerPageProps) {
   }, [dbError, dbReady, formState.customerId, loadTransactions]);
 
   const handleAddTransaction = async (type: TransactionType) => {
-
     const parsedCustomerId = Number(formState.customerId);
+
     if (!parsedCustomerId) {
-      setErrorMessage("Please select a customer.");
+      setErrorMessage("Lütfen bir müşteri seçin.");
       return;
     }
 
     const parsedAmount = Number(formState.amount);
-    if (!Number.isFinite(parsedAmount) || Number.isNaN(parsedAmount) || parsedAmount <= 0) {
-      setErrorMessage("Amount must be greater than 0.");
+    if (
+      !Number.isFinite(parsedAmount) ||
+      Number.isNaN(parsedAmount) ||
+      parsedAmount <= 0
+    ) {
+      setErrorMessage("Tutar 0'dan büyük olmalıdır.");
       return;
     }
 
@@ -171,7 +182,7 @@ export function LedgerPage({ dbReady, dbError }: LedgerPageProps) {
       await loadTransactions(parsedCustomerId);
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : "Failed to save transaction.",
+        error instanceof Error ? error.message : "İşlem kaydedilemedi.",
       );
     } finally {
       setIsSubmitting(false);
@@ -180,14 +191,14 @@ export function LedgerPage({ dbReady, dbError }: LedgerPageProps) {
 
   return (
     <section className="page">
-      <h1>Ledger</h1>
+      <h1>Veresiye</h1>
 
-      {dbError && <p className="status error">Database error: {dbError}</p>}
-      {!dbError && !dbReady && <p className="status">Initializing database…</p>}
+      {dbError && <p className="status error">Veritabanı hatası: {dbError}</p>}
+      {!dbError && !dbReady && <p className="status">Veritabanı hazırlanıyor…</p>}
 
       <form className="customer-form" onSubmit={(event) => event.preventDefault()}>
         <label>
-          Customer *
+          Müşteri *
           <select
             value={formState.customerId}
             onChange={(event) =>
@@ -198,7 +209,7 @@ export function LedgerPage({ dbReady, dbError }: LedgerPageProps) {
             }
             disabled={!dbReady || !!dbError || isLoadingCustomers || isSubmitting}
           >
-            <option value="">Select a customer</option>
+            <option value="">Müşteri seçin</option>
             {customers.map((customer) => (
               <option key={customer.id} value={customer.id}>
                 {customer.name}
@@ -208,7 +219,7 @@ export function LedgerPage({ dbReady, dbError }: LedgerPageProps) {
         </label>
 
         <label>
-          Amount *
+          Tutar *
           <input
             type="number"
             min="0.01"
@@ -225,7 +236,7 @@ export function LedgerPage({ dbReady, dbError }: LedgerPageProps) {
         </label>
 
         <label>
-          Note
+          Not
           <textarea
             rows={3}
             value={formState.note}
@@ -247,7 +258,7 @@ export function LedgerPage({ dbReady, dbError }: LedgerPageProps) {
               void handleAddTransaction("debt");
             }}
           >
-            {isSubmitting ? "Saving..." : "Add Debt"}
+            {isSubmitting ? "Kaydediliyor..." : "Borç Ekle"}
           </button>
           <button
             type="button"
@@ -257,28 +268,28 @@ export function LedgerPage({ dbReady, dbError }: LedgerPageProps) {
               void handleAddTransaction("payment");
             }}
           >
-            {isSubmitting ? "Saving..." : "Add Payment"}
+            {isSubmitting ? "Kaydediliyor..." : "Ödeme Al"}
           </button>
         </div>
       </form>
 
       {errorMessage && <p className="status error">{errorMessage}</p>}
-      {isLoadingCustomers && <p className="status">Loading customers…</p>}
+      {isLoadingCustomers && <p className="status">Müşteriler yükleniyor…</p>}
 
       {!isLoadingCustomers && customers.length === 0 && dbReady && !dbError && (
-        <p className="status">No customers yet. Add a customer first.</p>
+        <p className="status">Henüz müşteri yok. Önce müşteri ekleyin.</p>
       )}
 
-      {formState.customerId && customers.length > 0 && (
+      {formState.customerId && customers.length > 0 && selectedCustomer && (
         <>
           <p className="ledger-balance">
-            Balance for customer #{selectedCustomerId}: <strong>{formatAmount(balance)}</strong>
+            {selectedCustomer.name} için bakiye: <strong>{formatAmount(balance)}</strong>
           </p>
 
-          {isLoadingTransactions && <p className="status">Loading transactions…</p>}
+          {isLoadingTransactions && <p className="status">İşlemler yükleniyor…</p>}
 
           {!isLoadingTransactions && transactions.length === 0 && (
-            <p className="status">No transactions yet for this customer.</p>
+            <p className="status">Bu müşteri için henüz işlem yok.</p>
           )}
 
           {transactions.length > 0 && (
@@ -286,16 +297,16 @@ export function LedgerPage({ dbReady, dbError }: LedgerPageProps) {
               <table className="customers-table">
                 <thead>
                   <tr>
-                    <th>Type</th>
-                    <th>Amount</th>
-                    <th>Note</th>
-                    <th>Created at</th>
+                    <th>Tür</th>
+                    <th>Tutar</th>
+                    <th>Not</th>
+                    <th>Oluşturulma</th>
                   </tr>
                 </thead>
                 <tbody>
                   {transactions.map((transaction) => (
                     <tr key={transaction.id}>
-                      <td>{transaction.type}</td>
+                      <td>{formatTransactionType(transaction.type)}</td>
                       <td>{formatAmount(transaction.amount)}</td>
                       <td>{transaction.note || "-"}</td>
                       <td>{formatCreatedAt(transaction.created_at)}</td>
