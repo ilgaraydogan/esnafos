@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { getDashboardSummary } from "../../db";
+import { getCashSummary, getDashboardSummary } from "../../db";
 
 type DashboardPageProps = {
   dbReady: boolean;
@@ -12,10 +12,24 @@ type Summary = {
   totalPayment: number;
 };
 
+type CashSummary = {
+  todayCashTotal: number;
+  todayCardTotal: number;
+  todayCreditTotal: number;
+  todayTotalSales: number;
+};
+
 const initialSummary: Summary = {
   totalCustomers: 0,
   totalDebt: 0,
   totalPayment: 0,
+};
+
+const initialCashSummary: CashSummary = {
+  todayCashTotal: 0,
+  todayCardTotal: 0,
+  todayCreditTotal: 0,
+  todayTotalSales: 0,
 };
 
 const moneyFormatter = new Intl.NumberFormat("tr-TR", {
@@ -25,6 +39,7 @@ const moneyFormatter = new Intl.NumberFormat("tr-TR", {
 
 export function DashboardPage({ dbReady, dbError }: DashboardPageProps) {
   const [summary, setSummary] = useState<Summary>(initialSummary);
+  const [cashSummary, setCashSummary] = useState<CashSummary>(initialCashSummary);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -40,10 +55,14 @@ export function DashboardPage({ dbReady, dbError }: DashboardPageProps) {
       setError(null);
 
       try {
-        const dashboardSummary = await getDashboardSummary();
+        const [dashboardSummary, todayCashSummary] = await Promise.all([
+          getDashboardSummary(),
+          getCashSummary(),
+        ]);
 
         if (mounted) {
           setSummary(dashboardSummary);
+          setCashSummary(todayCashSummary);
         }
       } catch (loadError) {
         if (mounted) {
@@ -104,6 +123,30 @@ export function DashboardPage({ dbReady, dbError }: DashboardPageProps) {
             <p>{moneyFormatter.format(netReceivable)}</p>
           </article>
         </div>
+      )}
+
+      {dbReady && !dbError && !loading && !error && (
+        <>
+          <h2>Bugünkü Kasa Özeti</h2>
+          <div className="dashboard-cards" aria-label="Kasa özeti kartları">
+            <article className="summary-card">
+              <h2>Nakit</h2>
+              <p>{moneyFormatter.format(cashSummary.todayCashTotal)}</p>
+            </article>
+            <article className="summary-card">
+              <h2>Kart</h2>
+              <p>{moneyFormatter.format(cashSummary.todayCardTotal)}</p>
+            </article>
+            <article className="summary-card">
+              <h2>Veresiye</h2>
+              <p>{moneyFormatter.format(cashSummary.todayCreditTotal)}</p>
+            </article>
+            <article className="summary-card">
+              <h2>Toplam Satış</h2>
+              <p>{moneyFormatter.format(cashSummary.todayTotalSales)}</p>
+            </article>
+          </div>
+        </>
       )}
     </section>
   );

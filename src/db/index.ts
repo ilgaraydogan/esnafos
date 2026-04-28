@@ -69,6 +69,31 @@ export interface DashboardSummary {
   totalPayment: number;
 }
 
+export interface Product {
+  id: number;
+  name: string;
+  sku: string | null;
+  stock_quantity: number;
+  low_stock_threshold: number;
+  unit_price: number | null;
+  created_at: string;
+}
+
+export interface NewProductInput {
+  name: string;
+  sku?: string;
+  stockQuantity: number;
+  lowStockThreshold: number;
+  unitPrice?: number;
+}
+
+export interface CashSummary {
+  todayCashTotal: number;
+  todayCardTotal: number;
+  todayCreditTotal: number;
+  todayTotalSales: number;
+}
+
 async function getDb(): Promise<Database> {
   if (!dbInstance) {
     dbInstance = await Database.load("sqlite:esnafos.db");
@@ -135,6 +160,18 @@ export async function initializeDatabase(): Promise<void> {
       note TEXT,
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE SET NULL
+    );
+  `);
+
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS products (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      sku TEXT,
+      stock_quantity REAL NOT NULL,
+      low_stock_threshold REAL NOT NULL,
+      unit_price REAL,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
   `);
 
@@ -330,5 +367,90 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
     totalCustomers: customerSummary?.totalCustomers ?? 0,
     totalDebt: transactionSummary?.totalDebt ?? 0,
     totalPayment: transactionSummary?.totalPayment ?? 0,
+  };
+}
+
+export async function createProduct(input: NewProductInput): Promise<number> {
+  const db = await getDb();
+  const name = input.name.trim();
+
+  if (!name) {
+    throw new Error("Product name cannot be empty.");
+  }
+
+  if (!Number.isFinite(input.stockQuantity) || input.stockQuantity < 0) {
+    throw new Error("Stock quantity must be 0 or greater.");
+  }
+
+  if (!Number.isFinite(input.lowStockThreshold) || input.lowStockThreshold < 0) {
+    throw new Error("Low stock threshold must be 0 or greater.");
+  }
+
+  if (input.unitPrice != null && (!Number.isFinite(input.unitPrice) || input.unitPrice < 0)) {
+    throw new Error("Unit price must be 0 or greater.");
+  }
+
+  const result = await db.execute(
+    "INSERT INTO products (name, sku, stock_quantity, low_stock_threshold, unit_price) VALUES ($1, $2, $3, $4, $5);",
+    [
+      name,
+      input.sku?.trim() || null,
+      input.stockQuantity,
+      input.lowStockThreshold,
+      input.unitPrice ?? null,
+    ],
+  );
+
+  if (result.lastInsertId == null) {
+    throw new Error("Failed to create product record.");
+  }
+
+  return result.lastInsertId;
+}
+
+export async function getProducts(): Promise<Product[]> {
+  const db = await getDb();
+
+  return db.select<Product[]>(
+    `SELECT id, name, sku, stock_quantity, low_stock_threshold, unit_price, created_at
+     FROM products
+     ORDER BY created_at DESC;`,
+  );
+}
+
+export async function updateProductStock(productId: number, newQuantity: number): Promise<void> {
+  const db = await getDb();
+
+  if (!Number.isFinite(newQuantity) || newQuantity < 0) {
+    throw new Error("Stock quantity must be 0 or greater.");
+  }
+
+  await db.execute("UPDATE products SET stock_quantity = $1 WHERE id = $2;", [newQuantity, productId]);
+}
+
+export async function getCashSummary(): Promise<CashSummary> {
+  const db = await getDb();
+
+  const [summary] = await db.select<
+    Array<{
+      todayCashTotal: number | null;
+      todayCardTotal: number | null;
+      todayCreditTotal: number | null;
+      todayTotalSales: number | null;
+    }>
+  >(
+    `SELECT
+      SUM(CASE WHEN payment_type = 'cash' AND date(created_at, 'localtime') = date('now', 'localtime') THEN total_amount ELSE 0 END) AS todayCashTotal,
+      SUM(CASE WHEN payment_type = 'card' AND date(created_at, 'localtime') = date('now', 'localtime') THEN total_amount ELSE 0 END) AS todayCardTotal,
+      SUM(CASE WHEN payment_type = 'credit' AND date(created_at, 'localtime') = date('now', 'localtime') THEN total_amount ELSE 0 END) AS todayCreditTotal,
+      SUM(CASE WHEN date(created_at, 'localtime') = date('now', 'localtime') THEN total_amount ELSE 0 END) AS todayTotalSales
+     FROM sales;`,
+  );
+
+  return {
+    todayCashTotal: summary?.todayCashTotal ?? 0,
+    todayCardTotal: summary?.todayCardTotal ?? 0,
+    todayCreditTotal: summary?.todayCreditTotal ?? 0,
+    todayTotalSales: summary?.todayTotalSales ?? 0,
   };
 }
