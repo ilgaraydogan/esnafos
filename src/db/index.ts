@@ -34,6 +34,12 @@ export interface NewTransactionInput {
   note?: string;
 }
 
+export interface DashboardSummary {
+  totalCustomers: number;
+  totalDebt: number;
+  totalPayment: number;
+}
+
 async function getDb(): Promise<Database> {
   if (!dbInstance) {
     dbInstance = await Database.load("sqlite:esnafos.db");
@@ -156,4 +162,27 @@ export async function getTransactionsByCustomer(
      ORDER BY created_at DESC;`,
     [customerId],
   );
+}
+
+export async function getDashboardSummary(): Promise<DashboardSummary> {
+  const db = await getDb();
+
+  const [customerSummary] = await db.select<Array<{ totalCustomers: number }>>(
+    "SELECT COUNT(*) AS totalCustomers FROM customers;",
+  );
+
+  const [transactionSummary] = await db.select<
+    Array<{ totalDebt: number | null; totalPayment: number | null }>
+  >(
+    `SELECT
+      SUM(CASE WHEN type = 'debt' THEN amount ELSE 0 END) AS totalDebt,
+      SUM(CASE WHEN type = 'payment' THEN amount ELSE 0 END) AS totalPayment
+     FROM transactions;`,
+  );
+
+  return {
+    totalCustomers: customerSummary?.totalCustomers ?? 0,
+    totalDebt: transactionSummary?.totalDebt ?? 0,
+    totalPayment: transactionSummary?.totalPayment ?? 0,
+  };
 }

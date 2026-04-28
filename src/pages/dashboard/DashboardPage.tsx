@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { getCustomers, getTransactionsByCustomer } from "../../db";
+import { getDashboardSummary } from "../../db";
 
 type DashboardPageProps = {
   dbReady: boolean;
@@ -40,28 +40,10 @@ export function DashboardPage({ dbReady, dbError }: DashboardPageProps) {
       setError(null);
 
       try {
-        const customers = await getCustomers();
-        let totalDebt = 0;
-        let totalPayment = 0;
-
-        for (const customer of customers) {
-          const transactions = await getTransactionsByCustomer(customer.id);
-
-          for (const transaction of transactions) {
-            if (transaction.type === "debt") {
-              totalDebt += transaction.amount;
-            } else {
-              totalPayment += transaction.amount;
-            }
-          }
-        }
+        const dashboardSummary = await getDashboardSummary();
 
         if (mounted) {
-          setSummary({
-            totalCustomers: customers.length,
-            totalDebt,
-            totalPayment,
-          });
+          setSummary(dashboardSummary);
         }
       } catch (loadError) {
         if (mounted) {
