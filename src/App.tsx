@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import "./App.css";
+import { initializeDatabase } from "./db";
 import { CustomersPage } from "./pages/customers/CustomersPage";
 import { DashboardPage } from "./pages/dashboard/DashboardPage";
 import { InventoryPage } from "./pages/inventory/InventoryPage";
@@ -25,11 +26,43 @@ const navItems: NavItem[] = [
 
 export default function App() {
   const [activePage, setActivePage] = useState<string>("dashboard");
+  const [dbReady, setDbReady] = useState<boolean>(false);
+  const [dbError, setDbError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const setupDatabase = async () => {
+      try {
+        await initializeDatabase();
+
+        if (mounted) {
+          setDbReady(true);
+          setDbError(null);
+        }
+      } catch (error) {
+        if (mounted) {
+          setDbReady(false);
+          setDbError(
+            error instanceof Error
+              ? error.message
+              : "Failed to initialize database.",
+          );
+        }
+      }
+    };
+
+    void setupDatabase();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const pageContent = useMemo(() => {
     switch (activePage) {
       case "customers":
-        return <CustomersPage />;
+        return <CustomersPage dbReady={dbReady} dbError={dbError} />;
       case "ledger":
         return <LedgerPage />;
       case "sales":
@@ -44,7 +77,7 @@ export default function App() {
       default:
         return <DashboardPage />;
     }
-  }, [activePage]);
+  }, [activePage, dbError, dbReady]);
 
   return (
     <div className="app-shell">
