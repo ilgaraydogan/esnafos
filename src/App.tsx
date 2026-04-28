@@ -75,7 +75,7 @@ export default function App() {
         return <SettingsPage />;
       case "dashboard":
       default:
-        return <DashboardPage />;
+        return <DashboardPage dbReady={dbReady} dbError={dbError} />;
     }
   }, [activePage, dbError, dbReady]);
 
