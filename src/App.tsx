@@ -70,7 +70,7 @@ export default function App() {
       case "orders":
         return <OrdersPage />;
       case "inventory":
-        return <InventoryPage />;
+        return <InventoryPage dbReady={dbReady} dbError={dbError} />;
       case "settings":
         return <SettingsPage />;
       case "dashboard":
