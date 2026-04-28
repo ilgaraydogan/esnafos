@@ -93,6 +93,14 @@ body {
   color: #4b5563;
 }
 
+
+.status.warning {
+  color: #92400e;
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+}
 .status.error {
   color: #b91c1c;
 }
