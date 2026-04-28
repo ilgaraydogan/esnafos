@@ -32,7 +32,7 @@ EsnafOS is designed to run without internet.
 - Tauri v2
 - React
 - TypeScript
-- SQLite (planned, not implemented yet)
+- SQLite (local, offline)
 - Rust (Tauri runtime)
 
 ## Development Setup
@@ -65,8 +65,41 @@ This repository currently contains the initial application shell:
 - Empty pages for core modules
 - Basic frontend structure for next feature tasks
 
-No database implementation and no business logic are included yet.
+Database foundation is now included; business logic and UI wiring are still in progress.
 
 ## License
 
 AGPL-3.0
+
+
+## Database (SQLite, local-only)
+
+The app now includes a lightweight SQLite database layer under `src/db/`.
+
+- Uses local SQLite file: `sqlite:esnafos.db`
+- No cloud database
+- Works offline
+
+### Initialize the database
+
+Call `initializeDatabase()` once during app startup (before using customer/transaction queries).
+
+```ts
+import { initializeDatabase } from "./db";
+
+await initializeDatabase();
+```
+
+### Available database functions
+
+- `createCustomer`
+- `getCustomers`
+- `addTransaction`
+- `getTransactionsByCustomer`
+
+The schema includes:
+
+- `customers`
+- `transactions`
+
+with a foreign key from `transactions.customer_id` to `customers.id`.
