@@ -198,6 +198,10 @@ export async function initializeDatabase(): Promise<void> {
   await db.execute(
     "CREATE INDEX IF NOT EXISTS idx_sales_customer_id ON sales(customer_id);",
   );
+
+  await db.execute(
+    "CREATE INDEX IF NOT EXISTS idx_products_name ON products(name);",
+  );
 }
 
 export async function createCustomer(
