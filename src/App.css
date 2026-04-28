@@ -157,3 +157,26 @@ body {
   color: #374151;
   font-weight: 600;
 }
+
+.customer-form select {
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  padding: 0.55rem 0.65rem;
+  font: inherit;
+  background: #ffffff;
+}
+
+.ledger-actions {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.customer-form button.secondary {
+  border-color: #4b5563;
+  background: #4b5563;
+}
+
+.ledger-balance {
+  margin-top: 1rem;
+  color: #111827;
+}

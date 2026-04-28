@@ -64,7 +64,7 @@ export default function App() {
       case "customers":
         return <CustomersPage dbReady={dbReady} dbError={dbError} />;
       case "ledger":
-        return <LedgerPage />;
+        return <LedgerPage dbReady={dbReady} dbError={dbError} />;
       case "sales":
         return <SalesPage />;
       case "orders":
