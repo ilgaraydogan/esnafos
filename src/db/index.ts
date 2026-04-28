@@ -231,32 +231,39 @@ export async function createSale(input: NewSaleInput): Promise<number> {
 
   const totalAmount = input.quantity * input.unitPrice;
 
-  const saleResult = await db.execute(
-    "INSERT INTO sales (customer_id, payment_type, total_amount, note) VALUES ($1, $2, $3, $4);",
-    [input.customerId ?? null, input.paymentType, totalAmount, input.note ?? null],
-  );
+  await db.execute("BEGIN TRANSACTION;");
 
-  if (saleResult.lastInsertId == null) {
-    throw new Error("Failed to create sale record.");
+  try {
+    const saleResult = await db.execute(
+      "INSERT INTO sales (customer_id, payment_type, total_amount, note) VALUES ($1, $2, $3, $4);",
+      [input.customerId ?? null, input.paymentType, totalAmount, input.note ?? null],
+    );
+
+    if (saleResult.lastInsertId == null) {
+      throw new Error("Failed to create sale record.");
+    }
+
+    const saleId = saleResult.lastInsertId;
+
+    await db.execute(
+      "INSERT INTO sale_items (sale_id, item_name, quantity, unit_price, total_price) VALUES ($1, $2, $3, $4, $5);",
+      [saleId, itemName, input.quantity, input.unitPrice, totalAmount],
+    );
+
+    if (input.paymentType === "credit" && input.customerId) {
+      await db.execute(
+        "INSERT INTO transactions (customer_id, type, amount, note) VALUES ($1, $2, $3, $4);",
+        [input.customerId, "debt", totalAmount, `Satış #${saleId} - ${itemName}`],
+      );
+    }
+
+    await db.execute("COMMIT;");
+
+    return saleId;
+  } catch (error) {
+    await db.execute("ROLLBACK;");
+    throw error;
   }
-
-  const saleId = saleResult.lastInsertId;
-
-  await db.execute(
-    "INSERT INTO sale_items (sale_id, item_name, quantity, unit_price, total_price) VALUES ($1, $2, $3, $4, $5);",
-    [saleId, itemName, input.quantity, input.unitPrice, totalAmount],
-  );
-
-  if (input.paymentType === "credit" && input.customerId) {
-    await addTransaction({
-      customerId: input.customerId,
-      type: "debt",
-      amount: totalAmount,
-      note: `Satış #${saleId} - ${itemName}`,
-    });
-  }
-
-  return saleId;
 }
 
 export async function getSales(): Promise<Sale[]> {
