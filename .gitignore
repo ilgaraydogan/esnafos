@@ -31,3 +31,6 @@ src-tauri/binaries/
 *.sln
 *.sw?
 
+
+# Prevent accidental commit of generated Tauri icons/binaries
+src-tauri/icons/
