@@ -103,3 +103,11 @@ The schema includes:
 - `transactions`
 
 with a foreign key from `transactions.customer_id` to `customers.id`.
+
+## Yedekleme ve Geri Yükleme
+
+Ayarlar sayfasında **Yedek Al** ve **Yedek Yükle** butonları bulunur.
+
+- Yedek Al: Yerel SQLite veritabanını `.db` / `.sqlite` dosyası olarak dışa aktarır.
+- Yedek Yükle: Seçilen yedeği onay sonrası mevcut veritabanının yerine koyar ve uygulamayı yeniler.
+
