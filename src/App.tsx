@@ -4,6 +4,7 @@ import { initializeDatabase } from "./db";
 import { CustomersPage } from "./pages/customers/CustomersPage";
 import { DashboardPage } from "./pages/dashboard/DashboardPage";
 import { InventoryPage } from "./pages/inventory/InventoryPage";
+import { LandingPage } from "./pages/landing/LandingPage";
 import { LedgerPage } from "./pages/ledger/LedgerPage";
 import { OrdersPage } from "./pages/orders/OrdersPage";
 import { SalesPage } from "./pages/sales/SalesPage";
@@ -15,6 +16,7 @@ type NavItem = {
 };
 
 const navItems: NavItem[] = [
+  { key: "landing", label: "Landing" },
   { key: "dashboard", label: "Dashboard" },
   { key: "customers", label: "Customers" },
   { key: "ledger", label: "Ledger" },
@@ -25,7 +27,7 @@ const navItems: NavItem[] = [
 ];
 
 export default function App() {
-  const [activePage, setActivePage] = useState<string>("dashboard");
+  const [activePage, setActivePage] = useState<string>("landing");
   const [dbReady, setDbReady] = useState<boolean>(false);
   const [dbError, setDbError] = useState<string | null>(null);
 
@@ -61,6 +63,8 @@ export default function App() {
 
   const pageContent = useMemo(() => {
     switch (activePage) {
+      case "landing":
+        return <LandingPage />;
       case "customers":
         return <CustomersPage dbReady={dbReady} dbError={dbError} />;
       case "ledger":
