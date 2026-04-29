@@ -3,9 +3,11 @@ import {
   createSale,
   Customer,
   getCustomers,
+  getSaleItems,
   getSales,
   PaymentType,
   Sale,
+  SaleItem,
 } from "../../db";
 
 type SalesPageProps = {
@@ -53,6 +55,9 @@ export function SalesPage({ dbReady, dbError }: SalesPageProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [selectedSaleId, setSelectedSaleId] = useState<number | null>(null);
+  const [selectedSaleItem, setSelectedSaleItem] = useState<SaleItem | null>(null);
+  const selectedSale = sales.find((sale) => sale.id === selectedSaleId) ?? null;
 
   const total = useMemo(() => {
     const quantity = Number(formState.quantity);
@@ -69,6 +74,11 @@ export function SalesPage({ dbReady, dbError }: SalesPageProps) {
       const [customerRows, saleRows] = await Promise.all([getCustomers(), getSales()]);
       setCustomers(customerRows);
       setSales(saleRows);
+      setSelectedSaleId((previous) =>
+        previous && saleRows.some((sale) => sale.id === previous)
+          ? previous
+          : saleRows[0]?.id ?? null,
+      );
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Satış verileri yüklenemedi.");
     } finally {
@@ -80,6 +90,17 @@ export function SalesPage({ dbReady, dbError }: SalesPageProps) {
     if (!dbReady || dbError) return;
     void loadData();
   }, [dbReady, dbError, loadData]);
+
+  useEffect(() => {
+    if (!selectedSaleId) {
+      setSelectedSaleItem(null);
+      return;
+    }
+
+    void getSaleItems(selectedSaleId)
+      .then((items) => setSelectedSaleItem(items[0] ?? null))
+      .catch(() => setSelectedSaleItem(null));
+  }, [selectedSaleId]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -233,7 +254,11 @@ export function SalesPage({ dbReady, dbError }: SalesPageProps) {
       </form>
 
       {errorMessage && <p className="status error">{errorMessage}</p>}
-      {isLoading && <p className="status">Satışlar yükleniyor…</p>}
+      {isLoading && <p className="status">Satış verileri hazırlanıyor…</p>}
+
+      {!isLoading && sales.length === 0 && dbReady && !dbError && (
+        <p className="status">Henüz satış yok. İlk satış kaydını oluşturun.</p>
+      )}
 
       {sales.length > 0 && (
         <div className="table-wrap">
@@ -249,7 +274,11 @@ export function SalesPage({ dbReady, dbError }: SalesPageProps) {
             </thead>
             <tbody>
               {sales.map((sale) => (
-                <tr key={sale.id}>
+                <tr
+                  key={sale.id}
+                  className={sale.id === selectedSaleId ? "is-selected" : undefined}
+                  onClick={() => setSelectedSaleId(sale.id)}
+                >
                   <td>{formatCreatedAt(sale.created_at)}</td>
                   <td>{sale.customer_name ?? "-"}</td>
                   <td>{formatPaymentType(sale.payment_type)}</td>
@@ -260,6 +289,20 @@ export function SalesPage({ dbReady, dbError }: SalesPageProps) {
             </tbody>
           </table>
         </div>
+      )}
+
+      {selectedSale && (
+        <section className="detail-card">
+          <h2>Satış Detayı</h2>
+          <p><strong>Ürün/Hizmet:</strong> {selectedSaleItem?.item_name ?? "-"}</p>
+          <p><strong>Miktar:</strong> {selectedSaleItem?.quantity ?? "-"}</p>
+          <p><strong>Birim Fiyat:</strong> {selectedSaleItem ? formatAmount(selectedSaleItem.unit_price) : "-"}</p>
+          <p><strong>Toplam:</strong> {formatAmount(selectedSale.total_amount)}</p>
+          <p><strong>Ödeme Tipi:</strong> {formatPaymentType(selectedSale.payment_type)}</p>
+          <p><strong>Müşteri:</strong> {selectedSale.customer_name ?? "-"}</p>
+          <p><strong>Not:</strong> {selectedSale.note || "-"}</p>
+          <p><strong>Tarih:</strong> {formatCreatedAt(selectedSale.created_at)}</p>
+        </section>
       )}
     </section>
   );
