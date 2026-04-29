@@ -34,6 +34,7 @@ function formatCreatedAt(value: string): string {
 
 export function CustomersPage({ dbReady, dbError }: CustomersPageProps) {
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [searchText, setSearchText] = useState<string>("");
   const [formState, setFormState] = useState<CustomerFormState>(initialFormState);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -92,16 +93,27 @@ export function CustomersPage({ dbReady, dbError }: CustomersPageProps) {
     }
   };
 
+  const normalizedSearch = searchText.trim().toLocaleLowerCase("tr-TR");
+  const filteredCustomers = customers.filter((customer) => {
+    if (!normalizedSearch) {
+      return true;
+    }
+
+    const name = customer.name.toLocaleLowerCase("tr-TR");
+    const phone = (customer.phone ?? "").toLocaleLowerCase("tr-TR");
+    return name.includes(normalizedSearch) || phone.includes(normalizedSearch);
+  });
+
   return (
     <section className="page">
-      <h1>Customers</h1>
+      <h1>Müşteriler</h1>
 
-      {dbError && <p className="status error">Database error: {dbError}</p>}
-      {!dbError && !dbReady && <p className="status">Initializing database…</p>}
+      {dbError && <p className="status error">Veritabanı hatası: {dbError}</p>}
+      {!dbError && !dbReady && <p className="status">Veritabanı hazırlanıyor…</p>}
 
       <form className="customer-form" onSubmit={handleSubmit}>
         <label>
-          Name *
+          Ad Soyad *
           <input
             type="text"
             value={formState.name}
@@ -117,7 +129,7 @@ export function CustomersPage({ dbReady, dbError }: CustomersPageProps) {
         </label>
 
         <label>
-          Phone
+          Telefon
           <input
             type="text"
             value={formState.phone}
@@ -132,7 +144,7 @@ export function CustomersPage({ dbReady, dbError }: CustomersPageProps) {
         </label>
 
         <label>
-          Note
+          Not
           <textarea
             rows={3}
             value={formState.note}
@@ -150,30 +162,45 @@ export function CustomersPage({ dbReady, dbError }: CustomersPageProps) {
           type="submit"
           disabled={!dbReady || !!dbError || isSubmitting}
         >
-          {isSubmitting ? "Saving..." : "Add customer"}
+          {isSubmitting ? "Kaydediliyor..." : "Müşteri Ekle"}
         </button>
       </form>
 
+      <label className="search-input-wrap">
+        Müşteri Ara
+        <input
+          type="text"
+          placeholder="Ad veya telefon ile ara"
+          value={searchText}
+          onChange={(event) => setSearchText(event.target.value)}
+          disabled={!dbReady || !!dbError || isLoading}
+        />
+      </label>
+
       {errorMessage && <p className="status error">{errorMessage}</p>}
-      {isLoading && <p className="status">Loading customers…</p>}
+      {isLoading && <p className="status">Müşteriler hazırlanıyor, lütfen bekleyin…</p>}
 
       {!isLoading && customers.length === 0 && dbReady && !dbError && (
-        <p className="status">No customers yet.</p>
+        <p className="status">Henüz müşteri yok. İlk müşterinizi ekleyin.</p>
       )}
 
-      {customers.length > 0 && (
+      {!isLoading && customers.length > 0 && filteredCustomers.length === 0 && (
+        <p className="status">Aramanızla eşleşen müşteri bulunamadı.</p>
+      )}
+
+      {filteredCustomers.length > 0 && (
         <div className="table-wrap">
           <table className="customers-table">
             <thead>
               <tr>
-                <th>Name</th>
-                <th>Phone</th>
-                <th>Note</th>
-                <th>Created at</th>
+                <th>Ad Soyad</th>
+                <th>Telefon</th>
+                <th>Not</th>
+                <th>Oluşturulma</th>
               </tr>
             </thead>
             <tbody>
-              {customers.map((customer) => (
+              {filteredCustomers.map((customer) => (
                 <tr key={customer.id}>
                   <td>{customer.name}</td>
                   <td>{customer.phone || "-"}</td>

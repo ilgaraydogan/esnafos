@@ -56,11 +56,19 @@ export function LedgerPage({ dbReady, dbError }: LedgerPageProps) {
   const [isLoadingTransactions, setIsLoadingTransactions] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [customerSearchText, setCustomerSearchText] = useState<string>("");
 
   const selectedCustomerId = Number(formState.customerId);
   const selectedCustomer = customers.find(
     (customer) => customer.id === selectedCustomerId,
   );
+  const normalizedSearch = customerSearchText.trim().toLocaleLowerCase("tr-TR");
+  const filteredCustomers = customers.filter((customer) => {
+    if (!normalizedSearch) return true;
+    const name = customer.name.toLocaleLowerCase("tr-TR");
+    const phone = (customer.phone ?? "").toLocaleLowerCase("tr-TR");
+    return name.includes(normalizedSearch) || phone.includes(normalizedSearch);
+  });
 
   const balance = useMemo(
     () =>
@@ -198,6 +206,17 @@ export function LedgerPage({ dbReady, dbError }: LedgerPageProps) {
 
       <form className="customer-form" onSubmit={(event) => event.preventDefault()}>
         <label>
+          Müşteri Ara
+          <input
+            type="text"
+            placeholder="Ad veya telefon ile ara"
+            value={customerSearchText}
+            onChange={(event) => setCustomerSearchText(event.target.value)}
+            disabled={!dbReady || !!dbError || isLoadingCustomers || isSubmitting}
+          />
+        </label>
+
+        <label>
           Müşteri *
           <select
             value={formState.customerId}
@@ -210,7 +229,7 @@ export function LedgerPage({ dbReady, dbError }: LedgerPageProps) {
             disabled={!dbReady || !!dbError || isLoadingCustomers || isSubmitting}
           >
             <option value="">Müşteri seçin</option>
-            {customers.map((customer) => (
+            {filteredCustomers.map((customer) => (
               <option key={customer.id} value={customer.id}>
                 {customer.name}
               </option>
@@ -274,7 +293,11 @@ export function LedgerPage({ dbReady, dbError }: LedgerPageProps) {
       </form>
 
       {errorMessage && <p className="status error">{errorMessage}</p>}
-      {isLoadingCustomers && <p className="status">Müşteriler yükleniyor…</p>}
+      {isLoadingCustomers && <p className="status">Müşteri listesi hazırlanıyor…</p>}
+
+      {!isLoadingCustomers && customers.length > 0 && filteredCustomers.length === 0 && (
+        <p className="status">Arama kriterine uygun müşteri bulunamadı.</p>
+      )}
 
       {!isLoadingCustomers && customers.length === 0 && dbReady && !dbError && (
         <p className="status">Henüz müşteri yok. Önce müşteri ekleyin.</p>

@@ -127,6 +127,22 @@ body {
   font: inherit;
 }
 
+.search-input-wrap {
+  margin-top: 1rem;
+  display: grid;
+  gap: 0.35rem;
+  max-width: 520px;
+  font-size: 0.9rem;
+  color: #374151;
+}
+
+.search-input-wrap input {
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  padding: 0.55rem 0.65rem;
+  font: inherit;
+}
+
 .customer-form button {
   width: fit-content;
   border: 1px solid #1d4ed8;
@@ -164,6 +180,18 @@ body {
 .customers-table th {
   color: #374151;
   font-weight: 600;
+}
+
+.customers-table tbody tr {
+  cursor: pointer;
+}
+
+.customers-table tbody tr:hover {
+  background: #f9fafb;
+}
+
+.customers-table tbody tr.is-selected {
+  background: #eef2ff;
 }
 
 .customer-form select {
@@ -214,4 +242,22 @@ body {
   font-size: 1.2rem;
   font-weight: 700;
   color: #111827;
+}
+
+.detail-card {
+  margin-top: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  padding: 1rem;
+  background: #fafafa;
+}
+
+.detail-card h2 {
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+  font-size: 1.1rem;
+}
+
+.detail-card p {
+  margin-top: 0.35rem;
 }
