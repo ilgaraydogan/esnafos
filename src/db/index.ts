@@ -1,6 +1,8 @@
+import { invoke } from "@tauri-apps/api/core";
 import Database from "@tauri-apps/plugin-sql";
 
 let dbInstance: Database | null = null;
+let dbUrl: string | null = null;
 
 export type TransactionType = "debt" | "payment";
 export type PaymentType = "cash" | "card" | "credit";
@@ -94,12 +96,29 @@ export interface CashSummary {
   todayTotalSales: number;
 }
 
+async function getDatabaseUrl(): Promise<string> {
+  if (!dbUrl) {
+    dbUrl = await invoke<string>("get_database_url");
+  }
+
+  return dbUrl;
+}
+
 async function getDb(): Promise<Database> {
   if (!dbInstance) {
-    dbInstance = await Database.load("sqlite:esnafos.db");
+    dbInstance = await Database.load(await getDatabaseUrl());
   }
 
   return dbInstance;
+}
+
+export async function closeDatabase(): Promise<void> {
+  if (!dbInstance) {
+    return;
+  }
+
+  await dbInstance.close();
+  dbInstance = null;
 }
 
 function validateTransactionType(type: string): asserts type is TransactionType {
