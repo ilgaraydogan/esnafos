@@ -1,0 +1,40 @@
+name: "Özellik isteği"
+description: "Yeni bir özellik öner"
+title: "[Özellik]: "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Fikrinizi paylaştığınız için teşekkürler.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: "Hangi sorunu çözüyor?"
+      description: "Önce sorunu anlatın"
+      placeholder: "Şu anda ... zor oluyor"
+    validations:
+      required: true
+
+  - type: textarea
+    id: cozum
+    attributes:
+      label: "Önerilen çözüm"
+      description: "Nasıl olmasını istersiniz?"
+      placeholder: "Bence ... eklenebilir"
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatif
+    attributes:
+      label: "Alternatifler"
+      description: "Düşündüğünüz başka yollar"
+
+  - type: textarea
+    id: ek
+    attributes:
+      label: "Ek bilgi"
+      description: "Görsel, örnek veya bağlantı"
