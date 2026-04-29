@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { open, save } from "@tauri-apps/plugin-dialog";
+import { closeDatabase } from "../../db";
 
 export function SettingsPage() {
   const [statusMessage, setStatusMessage] = useState<string>("");
@@ -43,6 +44,7 @@ export function SettingsPage() {
         return;
       }
 
+      await closeDatabase();
       await invoke("restore_database", { backupPath: selected });
       setStatusType("success");
       setStatusMessage("Yedek başarıyla yüklendi. Uygulama yeniden başlatılıyor...");

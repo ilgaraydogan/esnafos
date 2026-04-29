@@ -76,7 +76,7 @@ AGPL-3.0
 
 The app now includes a lightweight SQLite database layer under `src/db/`.
 
-- Uses local SQLite file: `sqlite:esnafos.db`
+- Uses local SQLite file URL: `sqlite:<app_data_dir>/esnafos.db`
 - No cloud database
 - Works offline
 
@@ -107,6 +107,8 @@ with a foreign key from `transactions.customer_id` to `customers.id`.
 ## Yedekleme ve Geri Yükleme
 
 Ayarlar sayfasında **Yedek Al** ve **Yedek Yükle** butonları bulunur.
+
+- Veritabanı dosyası uygulamanın `app_data_dir` klasörü altında `esnafos.db` olarak tutulur.
 
 - Yedek Al: Yerel SQLite veritabanını `.db` / `.sqlite` dosyası olarak dışa aktarır.
 - Yedek Yükle: Seçilen yedeği onay sonrası mevcut veritabanının yerine koyar ve uygulamayı yeniler.
