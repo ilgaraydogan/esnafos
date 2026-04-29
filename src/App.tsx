@@ -16,14 +16,14 @@ type NavItem = {
 };
 
 const navItems: NavItem[] = [
-  { key: "landing", label: "Landing" },
-  { key: "dashboard", label: "Dashboard" },
-  { key: "customers", label: "Customers" },
-  { key: "ledger", label: "Ledger" },
-  { key: "sales", label: "Sales" },
-  { key: "orders", label: "Orders" },
-  { key: "inventory", label: "Inventory" },
-  { key: "settings", label: "Settings" },
+  { key: "landing", label: "Tanıtım" },
+  { key: "dashboard", label: "Genel Bakış" },
+  { key: "customers", label: "Müşteriler" },
+  { key: "ledger", label: "Veresiye" },
+  { key: "sales", label: "Satış" },
+  { key: "orders", label: "Siparişler" },
+  { key: "inventory", label: "Stok" },
+  { key: "settings", label: "Ayarlar" },
 ];
 
 export default function App() {

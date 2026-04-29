@@ -45,7 +45,7 @@ export function LandingPage() {
       <section className="landing-section" aria-labelledby="cta-title">
         <h2 id="cta-title">Geri Bildirim</h2>
         <a
-          href="https://github.com/esnafos/esnafos/issues"
+          href="https://github.com/ilgaraydogan/esnafos/issues"
           target="_blank"
           rel="noreferrer"
           className="feedback-link"
@@ -55,7 +55,7 @@ export function LandingPage() {
       </section>
 
       <footer className="landing-footer">
-        <a href="https://github.com/esnafos/esnafos" target="_blank" rel="noreferrer">
+        <a href="https://github.com/ilgaraydogan/esnafos" target="_blank" rel="noreferrer">
           GitHub
         </a>
         <span>v0.1.0 (alpha)</span>
