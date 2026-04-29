@@ -1,0 +1,67 @@
+name: Build macOS
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-macos:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Tauri CLI
+        run: cargo install tauri-cli --locked
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Generate placeholder icons
+        shell: bash
+        run: |
+          mkdir -p src-tauri/icons
+
+          cat <<'B64' | base64 --decode > src-tauri/icons/icon.png
+          iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+X2ioAAAAASUVORK5CYII=
+          B64
+
+          mkdir -p icon.iconset
+          sips -z 16 16 src-tauri/icons/icon.png --out icon.iconset/icon_16x16.png
+          sips -z 32 32 src-tauri/icons/icon.png --out icon.iconset/icon_16x16@2x.png
+          sips -z 32 32 src-tauri/icons/icon.png --out icon.iconset/icon_32x32.png
+          sips -z 64 64 src-tauri/icons/icon.png --out icon.iconset/icon_32x32@2x.png
+          sips -z 128 128 src-tauri/icons/icon.png --out icon.iconset/icon_128x128.png
+          sips -z 256 256 src-tauri/icons/icon.png --out icon.iconset/icon_128x128@2x.png
+          sips -z 256 256 src-tauri/icons/icon.png --out icon.iconset/icon_256x256.png
+          sips -z 512 512 src-tauri/icons/icon.png --out icon.iconset/icon_256x256@2x.png
+          sips -z 512 512 src-tauri/icons/icon.png --out icon.iconset/icon_512x512.png
+          cp src-tauri/icons/icon.png icon.iconset/icon_512x512@2x.png
+          iconutil -c icns icon.iconset -o src-tauri/icons/icon.icns
+          rm -rf icon.iconset
+
+      - name: Build Tauri app (macOS)
+        run: npm run tauri build
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: EsnafOS-macOS
+          path: src-tauri/target/release/bundle
