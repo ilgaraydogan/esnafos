@@ -4,6 +4,7 @@ import { initializeDatabase } from "./db";
 import { CustomersPage } from "./pages/customers/CustomersPage";
 import { DashboardPage } from "./pages/dashboard/DashboardPage";
 import { InventoryPage } from "./pages/inventory/InventoryPage";
+import { LandingPage } from "./pages/landing/LandingPage";
 import { LedgerPage } from "./pages/ledger/LedgerPage";
 import { OrdersPage } from "./pages/orders/OrdersPage";
 import { SalesPage } from "./pages/sales/SalesPage";
@@ -15,17 +16,18 @@ type NavItem = {
 };
 
 const navItems: NavItem[] = [
-  { key: "dashboard", label: "Dashboard" },
-  { key: "customers", label: "Customers" },
-  { key: "ledger", label: "Ledger" },
-  { key: "sales", label: "Sales" },
-  { key: "orders", label: "Orders" },
-  { key: "inventory", label: "Inventory" },
-  { key: "settings", label: "Settings" },
+  { key: "landing", label: "Tanıtım" },
+  { key: "dashboard", label: "Genel Bakış" },
+  { key: "customers", label: "Müşteriler" },
+  { key: "ledger", label: "Veresiye" },
+  { key: "sales", label: "Satış" },
+  { key: "orders", label: "Siparişler" },
+  { key: "inventory", label: "Stok" },
+  { key: "settings", label: "Ayarlar" },
 ];
 
 export default function App() {
-  const [activePage, setActivePage] = useState<string>("dashboard");
+  const [activePage, setActivePage] = useState<string>("landing");
   const [dbReady, setDbReady] = useState<boolean>(false);
   const [dbError, setDbError] = useState<string | null>(null);
 
@@ -61,6 +63,8 @@ export default function App() {
 
   const pageContent = useMemo(() => {
     switch (activePage) {
+      case "landing":
+        return <LandingPage />;
       case "customers":
         return <CustomersPage dbReady={dbReady} dbError={dbError} />;
       case "ledger":

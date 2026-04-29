@@ -261,3 +261,80 @@ body {
 .detail-card p {
   margin-top: 0.35rem;
 }
+
+.landing-page {
+  max-width: 900px;
+}
+
+.landing-hero {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.landing-hero p {
+  margin: 0;
+  color: #4b5563;
+}
+
+.download-button {
+  width: fit-content;
+  border: 1px solid #1d4ed8;
+  background: #1d4ed8;
+  color: #ffffff;
+  border-radius: 0.5rem;
+  padding: 0.55rem 0.95rem;
+  font: inherit;
+  opacity: 0.8;
+}
+
+.landing-section {
+  margin-top: 1.5rem;
+}
+
+.landing-section h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.1rem;
+}
+
+.landing-section ul {
+  margin: 0;
+  padding-left: 1.2rem;
+  color: #374151;
+}
+
+.download-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem;
+}
+
+.download-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 0.6rem;
+  padding: 0.9rem;
+  background: #fafafa;
+}
+
+.download-card h3,
+.download-card p {
+  margin: 0;
+}
+
+.feedback-link {
+  color: #1d4ed8;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.feedback-link:hover {
+  text-decoration: underline;
+}
+
+.landing-footer {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  gap: 1rem;
+  color: #4b5563;
+}
