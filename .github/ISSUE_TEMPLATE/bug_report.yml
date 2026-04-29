@@ -1,0 +1,44 @@
+name: "Hata bildirimi"
+description: "Bir hatayı bize bildir"
+title: "[Hata]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Teşekkürler. Lütfen hatayı basit şekilde anlatın.
+
+  - type: textarea
+    id: hata
+    attributes:
+      label: "Hata nedir?"
+      description: "Ne oldu, ne bekliyordunuz?"
+      placeholder: "Kısa ve net yazın"
+    validations:
+      required: true
+
+  - type: textarea
+    id: adimlar
+    attributes:
+      label: "Tekrar adımları"
+      description: "Hatayı tekrar görmek için adımlar"
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: true
+
+  - type: input
+    id: surum
+    attributes:
+      label: "Sürüm"
+      description: "Kullandığınız uygulama sürümü"
+      placeholder: "Örn: v0.1.0"
+
+  - type: textarea
+    id: ek
+    attributes:
+      label: "Ek bilgi"
+      description: "Ekran görüntüsü, log veya başka bilgi"

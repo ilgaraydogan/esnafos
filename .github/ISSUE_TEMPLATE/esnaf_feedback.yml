@@ -1,0 +1,45 @@
+name: "Esnaf geri bildirimi"
+description: "Günlük kullanım deneyiminizi paylaşın"
+title: "[Geri Bildirim]: "
+labels:
+  - feedback
+body:
+  - type: markdown
+    attributes:
+      value: |
+        EsnafOS'u geliştirmemiz için geri bildiriminiz çok değerli.
+
+  - type: dropdown
+    id: alan
+    attributes:
+      label: "Hangi alan hakkında?"
+      options:
+        - Satış
+        - Stok
+        - Müşteri
+        - Raporlama
+        - Ayarlar
+        - Diğer
+    validations:
+      required: true
+
+  - type: textarea
+    id: deneyim
+    attributes:
+      label: "Deneyiminiz"
+      description: "Ne iyi, ne zor?"
+      placeholder: "Kısa bir şekilde anlatın"
+    validations:
+      required: true
+
+  - type: textarea
+    id: oneriniz
+    attributes:
+      label: "Öneriniz"
+      description: "Ne değişirse daha iyi olur?"
+
+  - type: input
+    id: isletme
+    attributes:
+      label: "İşletme tipi (opsiyonel)"
+      placeholder: "Örn: market, kafe, bakkal"
