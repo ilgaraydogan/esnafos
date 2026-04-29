@@ -59,6 +59,12 @@ fn restore_database(app: tauri::AppHandle, backup_path: String) -> Result<(), St
     Ok(())
 }
 
+
+#[tauri::command]
+fn relaunch_app(app: tauri::AppHandle) -> Result<(), String> {
+    app.restart();
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -68,7 +74,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             get_database_url,
             backup_database,
-            restore_database
+            restore_database,
+            relaunch_app
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -46,9 +46,21 @@ export function SettingsPage() {
 
       await closeDatabase();
       await invoke("restore_database", { backupPath: selected });
+
       setStatusType("success");
       setStatusMessage("Yedek başarıyla yüklendi. Uygulama yeniden başlatılıyor...");
-      window.location.reload();
+
+      try {
+        await invoke("relaunch_app");
+      } catch {
+        alert(
+          "Yedek yüklendi. Değişikliklerin aktif olması için uygulamayı tamamen kapatıp yeniden açın.",
+        );
+        setStatusType("error");
+        setStatusMessage(
+          "Yedek yüklendi ancak otomatik yeniden başlatma yapılamadı. Lütfen uygulamayı tamamen kapatıp yeniden açın.",
+        );
+      }
     } catch (error) {
       setStatusType("error");
       setStatusMessage(`Yedek yüklenirken hata oluştu: ${String(error)}`);
