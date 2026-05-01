@@ -37,11 +37,35 @@ jobs:
       - name: Generate placeholder icons
         shell: bash
         run: |
-          mkdir -p src-tauri/icons
+          python3 - <<'PY'
+          import struct, zlib, pathlib
 
-          cat <<'B64' | base64 --decode > src-tauri/icons/icon.png
-          iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+X2ioAAAAASUVORK5CYII=
-          B64
+          width = height = 1024
+          pathlib.Path("src-tauri/icons").mkdir(parents=True, exist_ok=True)
+
+          def chunk(kind, data):
+              return (
+                  struct.pack(">I", len(data))
+                  + kind
+                  + data
+                  + struct.pack(">I", zlib.crc32(kind + data) & 0xffffffff)
+              )
+
+          # RGBA: blue-ish placeholder, fully opaque
+          raw = b"".join(
+              b"\x00" + bytes([29, 78, 216, 255]) * width
+              for _ in range(height)
+          )
+
+          png = (
+              b"\x89PNG\r\n\x1a\n"
+              + chunk(b"IHDR", struct.pack(">IIBBBBB", width, height, 8, 6, 0, 0, 0))
+              + chunk(b"IDAT", zlib.compress(raw, 9))
+              + chunk(b"IEND", b"")
+          )
+
+          pathlib.Path("src-tauri/icons/icon.png").write_bytes(png)
+          PY
 
           mkdir -p icon.iconset
           sips -z 16 16 src-tauri/icons/icon.png --out icon.iconset/icon_16x16.png
