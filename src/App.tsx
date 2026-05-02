@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import "./App.css";
 import { initializeDatabase } from "./db";
 import { CustomersPage } from "./pages/customers/CustomersPage";
+import { CashPage } from "./pages/cash/CashPage";
 import { DashboardPage } from "./pages/dashboard/DashboardPage";
 import { InventoryPage } from "./pages/inventory/InventoryPage";
 import { LandingPage } from "./pages/landing/LandingPage";
@@ -21,6 +22,7 @@ const navItems: NavItem[] = [
   { key: "customers", label: "Müşteriler" },
   { key: "ledger", label: "Veresiye" },
   { key: "sales", label: "Satış" },
+  { key: "cash", label: "Kasa" },
   { key: "orders", label: "Siparişler" },
   { key: "inventory", label: "Stok" },
   { key: "settings", label: "Ayarlar" },
@@ -71,6 +73,8 @@ export default function App() {
         return <LedgerPage dbReady={dbReady} dbError={dbError} />;
       case "sales":
         return <SalesPage dbReady={dbReady} dbError={dbError} />;
+      case "cash":
+        return <CashPage dbReady={dbReady} dbError={dbError} />;
       case "orders":
         return <OrdersPage />;
       case "inventory":

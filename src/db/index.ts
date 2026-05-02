@@ -96,6 +96,22 @@ export interface CashSummary {
   todayTotalSales: number;
 }
 
+export type CashEntryType = "income" | "expense";
+
+export interface CashEntry {
+  id: number;
+  type: CashEntryType;
+  amount: number;
+  note: string | null;
+  created_at: string;
+}
+
+export interface NewCashEntryInput {
+  type: CashEntryType;
+  amount: number;
+  note?: string;
+}
+
 async function getDatabaseUrl(): Promise<string> {
   if (!dbUrl) {
     dbUrl = await invoke<string>("get_database_url");
@@ -130,6 +146,12 @@ function validateTransactionType(type: string): asserts type is TransactionType 
 function validatePaymentType(type: string): asserts type is PaymentType {
   if (type !== "cash" && type !== "card" && type !== "credit") {
     throw new Error("Payment type must be cash, card, or credit.");
+  }
+}
+
+function validateCashEntryType(type: string): asserts type is CashEntryType {
+  if (type !== "income" && type !== "expense") {
+    throw new Error("Cash entry type must be income or expense.");
   }
 }
 
@@ -221,6 +243,54 @@ export async function initializeDatabase(): Promise<void> {
   await db.execute(
     "CREATE INDEX IF NOT EXISTS idx_products_name ON products(name);",
   );
+
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS cash_entries (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      type TEXT NOT NULL CHECK(type IN ('income', 'expense')),
+      amount REAL NOT NULL,
+      note TEXT,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+}
+
+export async function addCashEntry(input: NewCashEntryInput): Promise<number> {
+  const db = await getDb();
+
+  validateCashEntryType(input.type);
+  validatePositiveAmount(input.amount, "Cash entry amount");
+
+  const result = await db.execute(
+    "INSERT INTO cash_entries (type, amount, note) VALUES ($1, $2, $3);",
+    [input.type, input.amount, input.note?.trim() || null],
+  );
+
+  if (result.lastInsertId == null) {
+    throw new Error("Failed to create cash entry.");
+  }
+
+  return result.lastInsertId;
+}
+
+export async function getCashEntries(): Promise<CashEntry[]> {
+  const db = await getDb();
+
+  return db.select<CashEntry[]>(
+    "SELECT id, type, amount, note, created_at FROM cash_entries ORDER BY created_at DESC, id DESC;",
+  );
+}
+
+export async function getTotalCashBalance(): Promise<number> {
+  const db = await getDb();
+
+  const [row] = await db.select<Array<{ total: number | null }>>(
+    `SELECT
+      SUM(CASE WHEN type = 'income' THEN amount ELSE -amount END) AS total
+     FROM cash_entries;`,
+  );
+
+  return row?.total ?? 0;
 }
 
 export async function createCustomer(
