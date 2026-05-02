@@ -27,7 +27,7 @@ type SalesFormState = {
 const initialFormState: SalesFormState = {
   customerId: "",
   itemName: "",
-  quantity: "1",
+  quantity: "",
   unitPrice: "",
   paymentType: "cash",
   note: "",
@@ -55,6 +55,7 @@ export function SalesPage({ dbReady, dbError }: SalesPageProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [selectedSaleId, setSelectedSaleId] = useState<number | null>(null);
   const [selectedSaleItem, setSelectedSaleItem] = useState<SaleItem | null>(null);
   const selectedSale = sales.find((sale) => sale.id === selectedSaleId) ?? null;
@@ -67,18 +68,23 @@ export function SalesPage({ dbReady, dbError }: SalesPageProps) {
     return quantity * unitPrice;
   }, [formState.quantity, formState.unitPrice]);
 
+  const refreshSales = useCallback(async () => {
+    const saleRows = await getSales();
+    setSales(saleRows);
+    setSelectedSaleId((previous) =>
+      previous && saleRows.some((sale) => sale.id === previous)
+        ? previous
+        : saleRows[0]?.id ?? null,
+    );
+  }, []);
+
   const loadData = useCallback(async () => {
     setIsLoading(true);
     setErrorMessage(null);
     try {
-      const [customerRows, saleRows] = await Promise.all([getCustomers(), getSales()]);
+      const customerRows = await getCustomers();
       setCustomers(customerRows);
-      setSales(saleRows);
-      setSelectedSaleId((previous) =>
-        previous && saleRows.some((sale) => sale.id === previous)
-          ? previous
-          : saleRows[0]?.id ?? null,
-      );
+      await refreshSales();
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Satış verileri yüklenemedi.");
     } finally {
@@ -129,6 +135,7 @@ export function SalesPage({ dbReady, dbError }: SalesPageProps) {
 
     setIsSubmitting(true);
     setErrorMessage(null);
+    setSuccessMessage(null);
 
     try {
       await createSale({
@@ -141,8 +148,10 @@ export function SalesPage({ dbReady, dbError }: SalesPageProps) {
       });
 
       setFormState(initialFormState);
-      await loadData();
+      await refreshSales();
+      setSuccessMessage("Satış başarıyla kaydedildi.");
     } catch (error) {
+      setSuccessMessage(null);
       setErrorMessage(error instanceof Error ? error.message : "Satış kaydedilemedi.");
     } finally {
       setIsSubmitting(false);
@@ -254,6 +263,7 @@ export function SalesPage({ dbReady, dbError }: SalesPageProps) {
       </form>
 
       {errorMessage && <p className="status error">{errorMessage}</p>}
+      {successMessage && <p className="status">{successMessage}</p>}
       {isLoading && <p className="status">Satış verileri hazırlanıyor…</p>}
 
       {!isLoading && sales.length === 0 && dbReady && !dbError && (
