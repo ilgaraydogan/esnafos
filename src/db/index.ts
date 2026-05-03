@@ -528,6 +528,9 @@ export async function updateProductStock(productId: number, newQuantity: number)
 export async function decreaseStock(productId: number, quantity: number): Promise<void> {
   const db = await getDb();
   validatePositiveAmount(quantity, "Quantity");
+  if (!Number.isInteger(quantity)) {
+    throw new Error("Quantity must be an integer.");
+  }
 
   const [product] = await db.select<Array<{ stock: number }>>("SELECT stock FROM products WHERE id = $1;", [productId]);
   if (!product) {

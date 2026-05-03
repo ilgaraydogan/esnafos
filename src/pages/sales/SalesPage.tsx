@@ -121,8 +121,8 @@ export function SalesPage({ dbReady, dbError }: SalesPageProps) {
       return;
     }
 
-    if (!Number.isFinite(quantity) || quantity <= 0) {
-      setErrorMessage("Miktar 0'dan büyük olmalıdır.");
+    if (!Number.isInteger(quantity) || quantity <= 0) {
+      setErrorMessage("Miktar pozitif tam sayı olmalıdır.");
       return;
     }
 
@@ -215,8 +215,8 @@ export function SalesPage({ dbReady, dbError }: SalesPageProps) {
           Miktar *
           <input
             type="number"
-            min="0.01"
-            step="0.01"
+            min="1"
+            step="1"
             value={formState.quantity}
             onChange={(event) =>
               setFormState((previous) => ({ ...previous, quantity: event.target.value }))

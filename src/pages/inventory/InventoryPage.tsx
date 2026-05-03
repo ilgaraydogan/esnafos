@@ -27,6 +27,7 @@ function formatMoney(value: number | null): string {
 
 export function InventoryPage({ dbReady, dbError }: InventoryPageProps) {
   const [products, setProducts] = useState<Product[]>([]);
+  const [stockInputs, setStockInputs] = useState<Record<number, string>>({});
   const [formState, setFormState] = useState<ProductFormState>(initialFormState);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -37,7 +38,14 @@ export function InventoryPage({ dbReady, dbError }: InventoryPageProps) {
     setErrorMessage(null);
 
     try {
-      setProducts(await getProducts());
+      const nextProducts = await getProducts();
+      setProducts(nextProducts);
+      setStockInputs(
+        nextProducts.reduce<Record<number, string>>((acc, product) => {
+          acc[product.id] = String(product.stock);
+          return acc;
+        }, {}),
+      );
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Ürünler yüklenemedi.");
     } finally {
@@ -191,7 +199,13 @@ export function InventoryPage({ dbReady, dbError }: InventoryPageProps) {
                         type="number"
                         min="0"
                         step="1"
-                        defaultValue={product.stock}
+                        value={stockInputs[product.id] ?? String(product.stock)}
+                        onChange={(event) =>
+                          setStockInputs((previous) => ({
+                            ...previous,
+                            [product.id]: event.target.value,
+                          }))
+                        }
                         onBlur={(event) => void handleStockChange(product.id, event.target.value)}
                       />
                     </td>
