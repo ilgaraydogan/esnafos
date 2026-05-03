@@ -47,6 +47,15 @@ export interface Sale {
   created_at: string;
 }
 
+export interface SaleHistoryItem {
+  id: number;
+  product_name: string;
+  quantity: number;
+  unit_price: number;
+  total: number;
+  created_at: string;
+}
+
 export interface SaleItem {
   id: number;
   sale_id: number;
@@ -398,6 +407,8 @@ export async function createSale(input: NewSaleInput): Promise<number> {
 
     await db.execute("COMMIT;");
 
+    window.dispatchEvent(new Event("sales:updated"));
+
     return saleId;
   } catch (error) {
     await db.execute("ROLLBACK;");
@@ -421,6 +432,43 @@ export async function getSales(): Promise<Sale[]> {
      LEFT JOIN customers ON customers.id = sales.customer_id
      ORDER BY sales.created_at DESC;`,
   );
+}
+
+export async function getAllSales(): Promise<SaleHistoryItem[]> {
+  const db = await getDb();
+
+  return db.select<SaleHistoryItem[]>(
+    `SELECT
+      sales.id,
+      sale_items.item_name AS product_name,
+      sale_items.quantity,
+      sale_items.unit_price,
+      sales.total_amount AS total,
+      sales.created_at AS created_at
+     FROM sales
+     INNER JOIN sale_items ON sale_items.sale_id = sales.id
+     ORDER BY sales.created_at DESC, sales.id DESC;`,
+  );
+}
+
+export async function getSaleById(id: number): Promise<SaleHistoryItem | null> {
+  const db = await getDb();
+  const rows = await db.select<SaleHistoryItem[]>(
+    `SELECT
+      sales.id,
+      sale_items.item_name AS product_name,
+      sale_items.quantity,
+      sale_items.unit_price,
+      sales.total_amount AS total,
+      sales.created_at AS created_at
+     FROM sales
+     INNER JOIN sale_items ON sale_items.sale_id = sales.id
+     WHERE sales.id = $1
+     LIMIT 1;`,
+    [id],
+  );
+
+  return rows[0] ?? null;
 }
 
 export async function getSaleItems(saleId: number): Promise<SaleItem[]> {
