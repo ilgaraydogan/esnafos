@@ -1,5 +1,5 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
-import { createProduct, getProducts, Product } from "../../db";
+import { createProduct, getProducts, Product, updateProductStock } from "../../db";
 
 type InventoryPageProps = {
   dbReady: boolean;
@@ -9,16 +9,14 @@ type InventoryPageProps = {
 type ProductFormState = {
   name: string;
   sku: string;
-  stockQuantity: string;
-  lowStockThreshold: string;
+  stock: string;
   unitPrice: string;
 };
 
 const initialFormState: ProductFormState = {
   name: "",
   sku: "",
-  stockQuantity: "0",
-  lowStockThreshold: "5",
+  stock: "0",
   unitPrice: "",
 };
 
@@ -55,8 +53,7 @@ export function InventoryPage({ dbReady, dbError }: InventoryPageProps) {
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    const stockQuantity = Number(formState.stockQuantity);
-    const lowStockThreshold = Number(formState.lowStockThreshold);
+    const stock = Number(formState.stock);
     const unitPrice = formState.unitPrice.trim() ? Number(formState.unitPrice) : undefined;
 
     if (!formState.name.trim()) {
@@ -64,13 +61,8 @@ export function InventoryPage({ dbReady, dbError }: InventoryPageProps) {
       return;
     }
 
-    if (!Number.isFinite(stockQuantity) || stockQuantity < 0) {
+    if (!Number.isInteger(stock) || stock < 0) {
       setErrorMessage("Stok adedi 0 veya daha büyük olmalıdır.");
-      return;
-    }
-
-    if (!Number.isFinite(lowStockThreshold) || lowStockThreshold < 0) {
-      setErrorMessage("Kritik stok eşiği 0 veya daha büyük olmalıdır.");
       return;
     }
 
@@ -86,8 +78,7 @@ export function InventoryPage({ dbReady, dbError }: InventoryPageProps) {
       await createProduct({
         name: formState.name,
         sku: formState.sku.trim() || undefined,
-        stockQuantity,
-        lowStockThreshold,
+        stock,
         unitPrice,
       });
 
@@ -97,6 +88,17 @@ export function InventoryPage({ dbReady, dbError }: InventoryPageProps) {
       setErrorMessage(error instanceof Error ? error.message : "Ürün kaydedilemedi.");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleStockChange = async (productId: number, value: string) => {
+    const stock = Number(value);
+    if (!Number.isInteger(stock) || stock < 0) return;
+    try {
+      await updateProductStock(productId, stock);
+      await loadProducts();
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Stok güncellenemedi.");
     }
   };
 
@@ -139,23 +141,9 @@ export function InventoryPage({ dbReady, dbError }: InventoryPageProps) {
             type="number"
             min="0"
             step="1"
-            value={formState.stockQuantity}
+            value={formState.stock}
             onChange={(event) =>
-              setFormState((previous) => ({ ...previous, stockQuantity: event.target.value }))
-            }
-            disabled={!dbReady || !!dbError || isSubmitting}
-          />
-        </label>
-
-        <label>
-          Kritik Stok Eşiği *
-          <input
-            type="number"
-            min="0"
-            step="1"
-            value={formState.lowStockThreshold}
-            onChange={(event) =>
-              setFormState((previous) => ({ ...previous, lowStockThreshold: event.target.value }))
+              setFormState((previous) => ({ ...previous, stock: event.target.value }))
             }
             disabled={!dbReady || !!dbError || isSubmitting}
           />
@@ -189,24 +177,25 @@ export function InventoryPage({ dbReady, dbError }: InventoryPageProps) {
             <thead>
               <tr>
                 <th>Ürün</th>
-                <th>SKU</th>
                 <th>Stok</th>
-                <th>Kritik Eşik</th>
                 <th>Birim Fiyat</th>
-                <th>Durum</th>
               </tr>
             </thead>
             <tbody>
               {products.map((product) => {
-                const isLowStock = product.stock_quantity <= product.low_stock_threshold;
                 return (
                   <tr key={product.id}>
                     <td>{product.name}</td>
-                    <td>{product.sku ?? "-"}</td>
-                    <td>{product.stock_quantity}</td>
-                    <td>{product.low_stock_threshold}</td>
+                    <td>
+                      <input
+                        type="number"
+                        min="0"
+                        step="1"
+                        defaultValue={product.stock}
+                        onBlur={(event) => void handleStockChange(product.id, event.target.value)}
+                      />
+                    </td>
                     <td>{formatMoney(product.unit_price)}</td>
-                    <td>{isLowStock ? "⚠️ Kritik Stok" : "Normal"}</td>
                   </tr>
                 );
               })}

@@ -3,9 +3,11 @@ import {
   createSale,
   Customer,
   getCustomers,
+  getProducts,
   getSaleItems,
   getSales,
   PaymentType,
+  Product,
   Sale,
   SaleItem,
 } from "../../db";
@@ -17,18 +19,16 @@ type SalesPageProps = {
 
 type SalesFormState = {
   customerId: string;
-  itemName: string;
+  productId: string;
   quantity: string;
-  unitPrice: string;
   paymentType: PaymentType;
   note: string;
 };
 
 const initialFormState: SalesFormState = {
   customerId: "",
-  itemName: "",
+  productId: "",
   quantity: "",
-  unitPrice: "",
   paymentType: "cash",
   note: "",
 };
@@ -50,6 +50,7 @@ function formatPaymentType(value: PaymentType): string {
 
 export function SalesPage({ dbReady, dbError }: SalesPageProps) {
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
   const [formState, setFormState] = useState<SalesFormState>(initialFormState);
   const [isLoading, setIsLoading] = useState(false);
@@ -62,11 +63,10 @@ export function SalesPage({ dbReady, dbError }: SalesPageProps) {
 
   const total = useMemo(() => {
     const quantity = Number(formState.quantity);
-    const unitPrice = Number(formState.unitPrice);
-    if (!Number.isFinite(quantity) || !Number.isFinite(unitPrice)) return 0;
-    if (quantity <= 0 || unitPrice <= 0) return 0;
-    return quantity * unitPrice;
-  }, [formState.quantity, formState.unitPrice]);
+    const product = products.find((item) => item.id === Number(formState.productId));
+    if (!Number.isFinite(quantity) || quantity <= 0 || !product?.unit_price || product.unit_price <= 0) return 0;
+    return quantity * product.unit_price;
+  }, [formState.quantity, formState.productId, products]);
 
   const refreshSales = useCallback(async () => {
     const saleRows = await getSales();
@@ -83,7 +83,9 @@ export function SalesPage({ dbReady, dbError }: SalesPageProps) {
     setErrorMessage(null);
     try {
       const customerRows = await getCustomers();
+      const productRows = await getProducts();
       setCustomers(customerRows);
+      setProducts(productRows);
       await refreshSales();
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Satış verileri yüklenemedi.");
@@ -111,10 +113,11 @@ export function SalesPage({ dbReady, dbError }: SalesPageProps) {
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const quantity = Number(formState.quantity);
-    const unitPrice = Number(formState.unitPrice);
+    const productId = Number(formState.productId);
+    const selectedProduct = products.find((item) => item.id === productId);
 
-    if (!formState.itemName.trim()) {
-      setErrorMessage("Ürün/Hizmet adı zorunludur.");
+    if (!Number.isInteger(productId) || !selectedProduct) {
+      setErrorMessage("Ürün seçimi zorunludur.");
       return;
     }
 
@@ -123,8 +126,13 @@ export function SalesPage({ dbReady, dbError }: SalesPageProps) {
       return;
     }
 
-    if (!Number.isFinite(unitPrice) || unitPrice <= 0) {
-      setErrorMessage("Birim fiyat 0'dan büyük olmalıdır.");
+    if (!selectedProduct.unit_price || selectedProduct.unit_price <= 0) {
+      setErrorMessage("Seçilen ürünün birim fiyatı tanımlı olmalıdır.");
+      return;
+    }
+
+    if (selectedProduct.stock < quantity) {
+      setErrorMessage("Yetersiz stok.");
       return;
     }
 
@@ -140,14 +148,14 @@ export function SalesPage({ dbReady, dbError }: SalesPageProps) {
     try {
       await createSale({
         customerId: formState.customerId ? Number(formState.customerId) : undefined,
+        productId,
         paymentType: formState.paymentType,
         note: formState.note.trim() || undefined,
-        itemName: formState.itemName,
         quantity,
-        unitPrice,
       });
 
       setFormState(initialFormState);
+      setProducts(await getProducts());
       await refreshSales();
       setSuccessMessage("Satış başarıyla kaydedildi.");
     } catch (error) {
@@ -186,15 +194,21 @@ export function SalesPage({ dbReady, dbError }: SalesPageProps) {
         </label>
 
         <label>
-          Ürün/Hizmet Adı *
-          <input
-            type="text"
-            value={formState.itemName}
+          Ürün *
+          <select
+            value={formState.productId}
             onChange={(event) =>
-              setFormState((previous) => ({ ...previous, itemName: event.target.value }))
+              setFormState((previous) => ({ ...previous, productId: event.target.value }))
             }
             disabled={!dbReady || !!dbError || isSubmitting}
-          />
+          >
+            <option value="">Ürün seçin</option>
+            {products.map((product) => (
+              <option key={product.id} value={product.id}>
+                {product.name} (Stok: {product.stock})
+              </option>
+            ))}
+          </select>
         </label>
 
         <label>
@@ -206,20 +220,6 @@ export function SalesPage({ dbReady, dbError }: SalesPageProps) {
             value={formState.quantity}
             onChange={(event) =>
               setFormState((previous) => ({ ...previous, quantity: event.target.value }))
-            }
-            disabled={!dbReady || !!dbError || isSubmitting}
-          />
-        </label>
-
-        <label>
-          Birim Fiyat *
-          <input
-            type="number"
-            min="0.01"
-            step="0.01"
-            value={formState.unitPrice}
-            onChange={(event) =>
-              setFormState((previous) => ({ ...previous, unitPrice: event.target.value }))
             }
             disabled={!dbReady || !!dbError || isSubmitting}
           />
