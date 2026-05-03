@@ -95,6 +95,13 @@ export interface NewProductInput {
   unitPrice?: number;
 }
 
+
+export interface LowStockProduct {
+  id: number;
+  name: string;
+  stock: number;
+}
+
 export interface CashSummary {
   todayCashTotal: number;
   todayCardTotal: number;
@@ -618,6 +625,47 @@ export async function decreaseStock(productId: number, quantity: number): Promis
   }
 
   await db.execute("UPDATE products SET stock = stock - $1 WHERE id = $2;", [quantity, productId]);
+}
+
+
+export async function getTodaySalesTotal(): Promise<number> {
+  const db = await getDb();
+
+  const [row] = await db.select<Array<{ total: number | null }>>(
+    `SELECT COALESCE(SUM(total_amount), 0) AS total
+     FROM sales
+     WHERE date(created_at, 'localtime') = date('now', 'localtime');`,
+  );
+
+  return row?.total ?? 0;
+}
+
+export async function getTodaySalesCount(): Promise<number> {
+  const db = await getDb();
+
+  const [row] = await db.select<Array<{ count: number }>>(
+    `SELECT COUNT(*) AS count
+     FROM sales
+     WHERE date(created_at, 'localtime') = date('now', 'localtime');`,
+  );
+
+  return row?.count ?? 0;
+}
+
+export async function getLowStockProducts(threshold = 5): Promise<LowStockProduct[]> {
+  const db = await getDb();
+
+  if (!Number.isInteger(threshold) || threshold < 0) {
+    throw new Error('Threshold must be an integer and 0 or greater.');
+  }
+
+  return db.select<LowStockProduct[]>(
+    `SELECT id, name, stock
+     FROM products
+     WHERE stock <= $1
+     ORDER BY stock ASC, name ASC;`,
+    [threshold],
+  );
 }
 
 export async function getCashSummary(): Promise<CashSummary> {

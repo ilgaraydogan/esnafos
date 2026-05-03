@@ -1,35 +1,14 @@
-import { useEffect, useMemo, useState } from "react";
-import { getCashSummary, getDashboardSummary } from "../../db";
+import { useEffect, useState } from "react";
+import {
+  getLowStockProducts,
+  getTodaySalesCount,
+  getTodaySalesTotal,
+  type LowStockProduct,
+} from "../../db";
 
 type DashboardPageProps = {
   dbReady: boolean;
   dbError: string | null;
-};
-
-type Summary = {
-  totalCustomers: number;
-  totalDebt: number;
-  totalPayment: number;
-};
-
-type CashSummary = {
-  todayCashTotal: number;
-  todayCardTotal: number;
-  todayCreditTotal: number;
-  todayTotalSales: number;
-};
-
-const initialSummary: Summary = {
-  totalCustomers: 0,
-  totalDebt: 0,
-  totalPayment: 0,
-};
-
-const initialCashSummary: CashSummary = {
-  todayCashTotal: 0,
-  todayCardTotal: 0,
-  todayCreditTotal: 0,
-  todayTotalSales: 0,
 };
 
 const moneyFormatter = new Intl.NumberFormat("tr-TR", {
@@ -38,15 +17,16 @@ const moneyFormatter = new Intl.NumberFormat("tr-TR", {
 });
 
 export function DashboardPage({ dbReady, dbError }: DashboardPageProps) {
-  const [summary, setSummary] = useState<Summary>(initialSummary);
-  const [cashSummary, setCashSummary] = useState<CashSummary>(initialCashSummary);
+  const [todaySalesTotal, setTodaySalesTotal] = useState<number>(0);
+  const [todaySalesCount, setTodaySalesCount] = useState<number>(0);
+  const [lowStockProducts, setLowStockProducts] = useState<LowStockProduct[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
 
-    const loadSummary = async () => {
+    const loadDashboard = async () => {
       if (!dbReady || dbError) {
         return;
       }
@@ -55,21 +35,23 @@ export function DashboardPage({ dbReady, dbError }: DashboardPageProps) {
       setError(null);
 
       try {
-        const [dashboardSummary, todayCashSummary] = await Promise.all([
-          getDashboardSummary(),
-          getCashSummary(),
+        const [salesTotal, salesCount, lowStock] = await Promise.all([
+          getTodaySalesTotal(),
+          getTodaySalesCount(),
+          getLowStockProducts(),
         ]);
 
         if (mounted) {
-          setSummary(dashboardSummary);
-          setCashSummary(todayCashSummary);
+          setTodaySalesTotal(salesTotal);
+          setTodaySalesCount(salesCount);
+          setLowStockProducts(lowStock);
         }
       } catch (loadError) {
         if (mounted) {
           setError(
             loadError instanceof Error
               ? loadError.message
-              : "Failed to load dashboard summary.",
+              : "Failed to load dashboard data.",
           );
         }
       } finally {
@@ -79,73 +61,60 @@ export function DashboardPage({ dbReady, dbError }: DashboardPageProps) {
       }
     };
 
-    void loadSummary();
+    void loadDashboard();
 
     return () => {
       mounted = false;
     };
   }, [dbError, dbReady]);
 
-  const netReceivable = useMemo(
-    () => summary.totalDebt - summary.totalPayment,
-    [summary.totalDebt, summary.totalPayment],
-  );
-
   return (
     <section className="page">
-      <h1>Genel Bakış</h1>
-      <p>Yerel verilerden işletme özeti.</p>
+      <h1>Dashboard</h1>
+      <p>Günlük özet.</p>
 
       {!dbReady && !dbError && <p className="status">Yerel veritabanı hazırlanıyor...</p>}
       {dbError && <p className="status error">Veritabanı hatası: {dbError}</p>}
-      {loading && dbReady && !dbError && <p className="status">Özet yükleniyor...</p>}
+      {loading && dbReady && !dbError && <p className="status">Dashboard yükleniyor...</p>}
       {error && <p className="status error">{error}</p>}
 
       {dbReady && !dbError && !loading && !error && (
-        <div className="dashboard-cards" aria-label="Genel Bakış summary cards">
-          <article className="summary-card">
-            <h2>Toplam Müşteri</h2>
-            <p>{summary.totalCustomers}</p>
-          </article>
-
-          <article className="summary-card">
-            <h2>Toplam Borç</h2>
-            <p>{moneyFormatter.format(summary.totalDebt)}</p>
-          </article>
-
-          <article className="summary-card">
-            <h2>Toplam Ödeme</h2>
-            <p>{moneyFormatter.format(summary.totalPayment)}</p>
-          </article>
-
-          <article className="summary-card">
-            <h2>Net Alacak</h2>
-            <p>{moneyFormatter.format(netReceivable)}</p>
-          </article>
-        </div>
-      )}
-
-      {dbReady && !dbError && !loading && !error && (
         <>
-          <h2>Bugünkü Kasa Özeti</h2>
-          <div className="dashboard-cards" aria-label="Kasa özeti kartları">
+          <div className="dashboard-cards" aria-label="Dashboard günlük özet kartları">
             <article className="summary-card">
-              <h2>Nakit</h2>
-              <p>{moneyFormatter.format(cashSummary.todayCashTotal)}</p>
+              <h2>Bugünkü Toplam Satış</h2>
+              <p>{moneyFormatter.format(todaySalesTotal)}</p>
             </article>
+
             <article className="summary-card">
-              <h2>Kart</h2>
-              <p>{moneyFormatter.format(cashSummary.todayCardTotal)}</p>
-            </article>
-            <article className="summary-card">
-              <h2>Veresiye</h2>
-              <p>{moneyFormatter.format(cashSummary.todayCreditTotal)}</p>
-            </article>
-            <article className="summary-card">
-              <h2>Toplam Satış</h2>
-              <p>{moneyFormatter.format(cashSummary.todayTotalSales)}</p>
+              <h2>Bugünkü Satış Sayısı</h2>
+              <p>{todaySalesCount}</p>
             </article>
           </div>
+
+          <h2>Düşük Stok Ürünleri</h2>
+          {lowStockProducts.length === 0 ? (
+            <p>Düşük stokta ürün yok.</p>
+          ) : (
+            <div className="card" style={{ marginTop: "0.75rem" }}>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Ürün Adı</th>
+                    <th>Kalan Stok</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {lowStockProducts.map((product) => (
+                    <tr key={product.id}>
+                      <td>{product.name}</td>
+                      <td>{product.stock}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </>
       )}
     </section>
