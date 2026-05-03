@@ -18,8 +18,8 @@ type NavItem = {
 };
 
 const navItems: NavItem[] = [
+  { key: "dashboard", label: "Dashboard" },
   { key: "landing", label: "Tanıtım" },
-  { key: "dashboard", label: "Genel Bakış" },
   { key: "customers", label: "Müşteriler" },
   { key: "ledger", label: "Veresiye" },
   { key: "sales", label: "Satış" },
@@ -31,7 +31,7 @@ const navItems: NavItem[] = [
 ];
 
 export default function App() {
-  const [activePage, setActivePage] = useState<string>("landing");
+  const [activePage, setActivePage] = useState<string>("dashboard");
   const [dbReady, setDbReady] = useState<boolean>(false);
   const [dbError, setDbError] = useState<string | null>(null);
 
