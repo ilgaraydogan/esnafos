@@ -211,12 +211,6 @@ export async function initializeDatabase(): Promise<void> {
     );
   `);
 
-  const salesColumns = await db.select<Array<{ name: string }>>("PRAGMA table_info(sales);");
-  if (!salesColumns.some((column) => column.name === "createdAt")) {
-    await db.execute("ALTER TABLE sales ADD COLUMN createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP;");
-    await db.execute("UPDATE sales SET createdAt = created_at WHERE createdAt IS NULL OR createdAt = ''; ");
-  }
-
   await db.execute(`
     CREATE TABLE IF NOT EXISTS products (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -452,11 +446,11 @@ export async function getAllSales(): Promise<SaleHistoryItem[]> {
       sale_items.quantity,
       sale_items.unit_price,
       sales.total_amount AS total,
-      COALESCE(sales.createdAt, sales.created_at) AS created_at
+      sales.created_at AS created_at
      FROM sales
      INNER JOIN sale_items ON sale_items.sale_id = sales.id
      LEFT JOIN products ON products.name = sale_items.item_name
-     ORDER BY COALESCE(sales.createdAt, sales.created_at) DESC, sales.id DESC;`,
+     ORDER BY sales.created_at DESC, sales.id DESC;`,
   );
 }
 
@@ -470,7 +464,7 @@ export async function getSaleById(id: number): Promise<SaleHistoryItem | null> {
       sale_items.quantity,
       sale_items.unit_price,
       sales.total_amount AS total,
-      COALESCE(sales.createdAt, sales.created_at) AS created_at
+      sales.created_at AS created_at
      FROM sales
      INNER JOIN sale_items ON sale_items.sale_id = sales.id
      LEFT JOIN products ON products.name = sale_items.item_name
