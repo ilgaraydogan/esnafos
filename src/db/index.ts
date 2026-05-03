@@ -47,6 +47,16 @@ export interface Sale {
   created_at: string;
 }
 
+export interface SaleHistoryItem {
+  id: number;
+  product_id: number;
+  product_name: string;
+  quantity: number;
+  unit_price: number;
+  total: number;
+  created_at: string;
+}
+
 export interface SaleItem {
   id: number;
   sale_id: number;
@@ -200,6 +210,12 @@ export async function initializeDatabase(): Promise<void> {
       FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE SET NULL
     );
   `);
+
+  const salesColumns = await db.select<Array<{ name: string }>>("PRAGMA table_info(sales);");
+  if (!salesColumns.some((column) => column.name === "createdAt")) {
+    await db.execute("ALTER TABLE sales ADD COLUMN createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP;");
+    await db.execute("UPDATE sales SET createdAt = created_at WHERE createdAt IS NULL OR createdAt = ''; ");
+  }
 
   await db.execute(`
     CREATE TABLE IF NOT EXISTS products (
@@ -398,6 +414,8 @@ export async function createSale(input: NewSaleInput): Promise<number> {
 
     await db.execute("COMMIT;");
 
+    window.dispatchEvent(new Event("sales:updated"));
+
     return saleId;
   } catch (error) {
     await db.execute("ROLLBACK;");
@@ -421,6 +439,47 @@ export async function getSales(): Promise<Sale[]> {
      LEFT JOIN customers ON customers.id = sales.customer_id
      ORDER BY sales.created_at DESC;`,
   );
+}
+
+export async function getAllSales(): Promise<SaleHistoryItem[]> {
+  const db = await getDb();
+
+  return db.select<SaleHistoryItem[]>(
+    `SELECT
+      sales.id,
+      products.id AS product_id,
+      sale_items.item_name AS product_name,
+      sale_items.quantity,
+      sale_items.unit_price,
+      sales.total_amount AS total,
+      COALESCE(sales.createdAt, sales.created_at) AS created_at
+     FROM sales
+     INNER JOIN sale_items ON sale_items.sale_id = sales.id
+     LEFT JOIN products ON products.name = sale_items.item_name
+     ORDER BY COALESCE(sales.createdAt, sales.created_at) DESC, sales.id DESC;`,
+  );
+}
+
+export async function getSaleById(id: number): Promise<SaleHistoryItem | null> {
+  const db = await getDb();
+  const rows = await db.select<SaleHistoryItem[]>(
+    `SELECT
+      sales.id,
+      products.id AS product_id,
+      sale_items.item_name AS product_name,
+      sale_items.quantity,
+      sale_items.unit_price,
+      sales.total_amount AS total,
+      COALESCE(sales.createdAt, sales.created_at) AS created_at
+     FROM sales
+     INNER JOIN sale_items ON sale_items.sale_id = sales.id
+     LEFT JOIN products ON products.name = sale_items.item_name
+     WHERE sales.id = $1
+     LIMIT 1;`,
+    [id],
+  );
+
+  return rows[0] ?? null;
 }
 
 export async function getSaleItems(saleId: number): Promise<SaleItem[]> {

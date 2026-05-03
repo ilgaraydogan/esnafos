@@ -9,6 +9,7 @@ import { LandingPage } from "./pages/landing/LandingPage";
 import { LedgerPage } from "./pages/ledger/LedgerPage";
 import { OrdersPage } from "./pages/orders/OrdersPage";
 import { SalesPage } from "./pages/sales/SalesPage";
+import { SalesHistoryPage } from "./pages/sales-history/SalesHistoryPage";
 import { SettingsPage } from "./pages/settings/SettingsPage";
 
 type NavItem = {
@@ -22,6 +23,7 @@ const navItems: NavItem[] = [
   { key: "customers", label: "Müşteriler" },
   { key: "ledger", label: "Veresiye" },
   { key: "sales", label: "Satış" },
+  { key: "sales-history", label: "Satış Geçmişi" },
   { key: "cash", label: "Kasa" },
   { key: "orders", label: "Siparişler" },
   { key: "inventory", label: "Stok" },
@@ -75,6 +77,8 @@ export default function App() {
         return <SalesPage dbReady={dbReady} dbError={dbError} />;
       case "cash":
         return <CashPage dbReady={dbReady} dbError={dbError} />;
+      case "sales-history":
+        return <SalesHistoryPage dbReady={dbReady} dbError={dbError} />;
       case "orders":
         return <OrdersPage />;
       case "inventory":
