@@ -58,11 +58,10 @@ export interface SaleItem {
 
 export interface NewSaleInput {
   customerId?: number;
+  productId: number;
   paymentType: PaymentType;
   note?: string;
-  itemName: string;
   quantity: number;
-  unitPrice: number;
 }
 
 export interface DashboardSummary {
@@ -75,8 +74,7 @@ export interface Product {
   id: number;
   name: string;
   sku: string | null;
-  stock_quantity: number;
-  low_stock_threshold: number;
+  stock: number;
   unit_price: number | null;
   created_at: string;
 }
@@ -84,8 +82,7 @@ export interface Product {
 export interface NewProductInput {
   name: string;
   sku?: string;
-  stockQuantity: number;
-  lowStockThreshold: number;
+  stock: number;
   unitPrice?: number;
 }
 
@@ -209,12 +206,16 @@ export async function initializeDatabase(): Promise<void> {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,
       sku TEXT,
-      stock_quantity REAL NOT NULL,
-      low_stock_threshold REAL NOT NULL,
+      stock INTEGER NOT NULL DEFAULT 0,
       unit_price REAL,
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
   `);
+  const productColumns = await db.select<Array<{ name: string }>>("PRAGMA table_info(products);");
+  if (!productColumns.some((column) => column.name === "stock")) {
+    await db.execute("ALTER TABLE products ADD COLUMN stock INTEGER NOT NULL DEFAULT 0;");
+    await db.execute("UPDATE products SET stock = CAST(COALESCE(stock_quantity, 0) AS INTEGER) WHERE stock IS NULL OR stock = 0;");
+  }
 
   await db.execute(`
     CREATE TABLE IF NOT EXISTS sale_items (
@@ -348,22 +349,30 @@ export async function createSale(input: NewSaleInput): Promise<number> {
 
   validatePaymentType(input.paymentType);
   validatePositiveAmount(input.quantity, "Quantity");
-  validatePositiveAmount(input.unitPrice, "Unit price");
-
-  const itemName = input.itemName.trim();
-  if (!itemName) {
-    throw new Error("Item name cannot be empty.");
+  if (!Number.isInteger(input.productId) || input.productId <= 0) {
+    throw new Error("Product is required.");
   }
 
   if (input.paymentType === "credit" && !input.customerId) {
     throw new Error("Credit sales require a selected customer.");
   }
 
-  const totalAmount = input.quantity * input.unitPrice;
-
   await db.execute("BEGIN TRANSACTION;");
 
   try {
+    const [product] = await db.select<Array<{ name: string; unit_price: number | null; stock: number }>>(
+      "SELECT name, unit_price, stock FROM products WHERE id = $1;",
+      [input.productId],
+    );
+    if (!product) {
+      throw new Error("Selected product was not found.");
+    }
+    if (product.unit_price == null || product.unit_price <= 0) {
+      throw new Error("Selected product must have a valid unit price.");
+    }
+    await decreaseStock(input.productId, input.quantity);
+    const totalAmount = input.quantity * product.unit_price;
+
     const saleResult = await db.execute(
       "INSERT INTO sales (customer_id, payment_type, total_amount, note) VALUES ($1, $2, $3, $4);",
       [input.customerId ?? null, input.paymentType, totalAmount, input.note ?? null],
@@ -377,13 +386,13 @@ export async function createSale(input: NewSaleInput): Promise<number> {
 
     await db.execute(
       "INSERT INTO sale_items (sale_id, item_name, quantity, unit_price, total_price) VALUES ($1, $2, $3, $4, $5);",
-      [saleId, itemName, input.quantity, input.unitPrice, totalAmount],
+      [saleId, product.name, input.quantity, product.unit_price, totalAmount],
     );
 
     if (input.paymentType === "credit" && input.customerId) {
       await db.execute(
         "INSERT INTO transactions (customer_id, type, amount, note) VALUES ($1, $2, $3, $4);",
-        [input.customerId, "debt", totalAmount, `Satış #${saleId} - ${itemName}`],
+        [input.customerId, "debt", totalAmount, `Satış #${saleId} - ${product.name}`],
       );
     }
 
@@ -471,12 +480,8 @@ export async function createProduct(input: NewProductInput): Promise<number> {
     throw new Error("Product name cannot be empty.");
   }
 
-  if (!Number.isFinite(input.stockQuantity) || input.stockQuantity < 0) {
-    throw new Error("Stock quantity must be 0 or greater.");
-  }
-
-  if (!Number.isFinite(input.lowStockThreshold) || input.lowStockThreshold < 0) {
-    throw new Error("Low stock threshold must be 0 or greater.");
+  if (!Number.isInteger(input.stock) || input.stock < 0) {
+    throw new Error("Stock must be 0 or greater.");
   }
 
   if (input.unitPrice != null && (!Number.isFinite(input.unitPrice) || input.unitPrice < 0)) {
@@ -484,12 +489,11 @@ export async function createProduct(input: NewProductInput): Promise<number> {
   }
 
   const result = await db.execute(
-    "INSERT INTO products (name, sku, stock_quantity, low_stock_threshold, unit_price) VALUES ($1, $2, $3, $4, $5);",
+    "INSERT INTO products (name, sku, stock, unit_price) VALUES ($1, $2, $3, $4);",
     [
       name,
       input.sku?.trim() || null,
-      input.stockQuantity,
-      input.lowStockThreshold,
+      input.stock,
       input.unitPrice ?? null,
     ],
   );
@@ -505,7 +509,7 @@ export async function getProducts(): Promise<Product[]> {
   const db = await getDb();
 
   return db.select<Product[]>(
-    `SELECT id, name, sku, stock_quantity, low_stock_threshold, unit_price, created_at
+    `SELECT id, name, sku, stock, unit_price, created_at
      FROM products
      ORDER BY created_at DESC;`,
   );
@@ -514,11 +518,29 @@ export async function getProducts(): Promise<Product[]> {
 export async function updateProductStock(productId: number, newQuantity: number): Promise<void> {
   const db = await getDb();
 
-  if (!Number.isFinite(newQuantity) || newQuantity < 0) {
-    throw new Error("Stock quantity must be 0 or greater.");
+  if (!Number.isInteger(newQuantity) || newQuantity < 0) {
+    throw new Error("Stock must be 0 or greater.");
   }
 
-  await db.execute("UPDATE products SET stock_quantity = $1 WHERE id = $2;", [newQuantity, productId]);
+  await db.execute("UPDATE products SET stock = $1 WHERE id = $2;", [newQuantity, productId]);
+}
+
+export async function decreaseStock(productId: number, quantity: number): Promise<void> {
+  const db = await getDb();
+  validatePositiveAmount(quantity, "Quantity");
+  if (!Number.isInteger(quantity)) {
+    throw new Error("Quantity must be an integer.");
+  }
+
+  const [product] = await db.select<Array<{ stock: number }>>("SELECT stock FROM products WHERE id = $1;", [productId]);
+  if (!product) {
+    throw new Error("Selected product was not found.");
+  }
+  if (product.stock < quantity) {
+    throw new Error("Insufficient stock.");
+  }
+
+  await db.execute("UPDATE products SET stock = stock - $1 WHERE id = $2;", [quantity, productId]);
 }
 
 export async function getCashSummary(): Promise<CashSummary> {
