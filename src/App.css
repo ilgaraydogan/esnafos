@@ -194,6 +194,10 @@ body {
   background: #eef2ff;
 }
 
+.customers-table tbody tr.low-stock-row {
+  background: #fffbeb;
+}
+
 .customer-form select {
   border: 1px solid #d1d5db;
   border-radius: 0.5rem;
