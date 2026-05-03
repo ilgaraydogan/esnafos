@@ -1,5 +1,5 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
-import { createProduct, getProducts, Product, updateProductStock } from "../../db";
+import { createProduct, getProducts, Product, updateProduct } from "../../db";
 
 type InventoryPageProps = {
   dbReady: boolean;
@@ -27,7 +27,9 @@ function formatMoney(value: number | null): string {
 
 export function InventoryPage({ dbReady, dbError }: InventoryPageProps) {
   const [products, setProducts] = useState<Product[]>([]);
-  const [stockInputs, setStockInputs] = useState<Record<number, string>>({});
+  const [productInputs, setProductInputs] = useState<
+    Record<number, { name: string; sku: string; stock: string; unitPrice: string }>
+  >({});
   const [formState, setFormState] = useState<ProductFormState>(initialFormState);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -40,11 +42,19 @@ export function InventoryPage({ dbReady, dbError }: InventoryPageProps) {
     try {
       const nextProducts = await getProducts();
       setProducts(nextProducts);
-      setStockInputs(
-        nextProducts.reduce<Record<number, string>>((acc, product) => {
-          acc[product.id] = String(product.stock);
-          return acc;
-        }, {}),
+      setProductInputs(
+        nextProducts.reduce<Record<number, { name: string; sku: string; stock: string; unitPrice: string }>>(
+          (acc, product) => {
+            acc[product.id] = {
+            name: product.name,
+            sku: product.sku ?? "",
+            stock: String(product.stock),
+            unitPrice: product.unit_price == null ? "" : String(product.unit_price),
+            };
+            return acc;
+          },
+          {},
+        ),
       );
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Ürünler yüklenemedi.");
@@ -99,14 +109,37 @@ export function InventoryPage({ dbReady, dbError }: InventoryPageProps) {
     }
   };
 
-  const handleStockChange = async (productId: number, value: string) => {
-    const stock = Number(value);
-    if (!Number.isInteger(stock) || stock < 0) return;
+  const handleProductUpdate = async (productId: number) => {
+    const input = productInputs[productId];
+    if (!input) return;
+    const stock = Number(input.stock);
+    const unitPrice = input.unitPrice.trim() ? Number(input.unitPrice) : undefined;
+
+    if (!input.name.trim()) {
+      setErrorMessage("Ürün adı zorunludur.");
+      return;
+    }
+
+    if (!Number.isInteger(stock) || stock < 0) {
+      setErrorMessage("Stok adedi 0 veya daha büyük olmalıdır.");
+      return;
+    }
+
+    if (unitPrice != null && (!Number.isFinite(unitPrice) || unitPrice < 0)) {
+      setErrorMessage("Birim fiyat 0 veya daha büyük olmalıdır.");
+      return;
+    }
+
     try {
-      await updateProductStock(productId, stock);
+      await updateProduct(productId, {
+        name: input.name,
+        sku: input.sku.trim() || undefined,
+        stock,
+        unitPrice,
+      });
       await loadProducts();
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Stok güncellenemedi.");
+      setErrorMessage(error instanceof Error ? error.message : "Ürün güncellenemedi.");
     }
   };
 
@@ -185,31 +218,80 @@ export function InventoryPage({ dbReady, dbError }: InventoryPageProps) {
             <thead>
               <tr>
                 <th>Ürün</th>
+                <th>SKU</th>
                 <th>Stok</th>
                 <th>Birim Fiyat</th>
+                <th>İşlem</th>
               </tr>
             </thead>
             <tbody>
               {products.map((product) => {
+                const productInput = productInputs[product.id] ?? {
+                  name: product.name,
+                  sku: product.sku ?? "",
+                  stock: String(product.stock),
+                  unitPrice: product.unit_price == null ? "" : String(product.unit_price),
+                };
                 return (
                   <tr key={product.id}>
-                    <td>{product.name}</td>
+                    <td>
+                      <input
+                        type="text"
+                        value={productInput.name}
+                        onChange={(event) =>
+                          setProductInputs((previous) => ({
+                            ...previous,
+                            [product.id]: { ...productInput, name: event.target.value },
+                          }))
+                        }
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="text"
+                        value={productInput.sku}
+                        onChange={(event) =>
+                          setProductInputs((previous) => ({
+                            ...previous,
+                            [product.id]: { ...productInput, sku: event.target.value },
+                          }))
+                        }
+                      />
+                    </td>
                     <td>
                       <input
                         type="number"
                         min="0"
                         step="1"
-                        value={stockInputs[product.id] ?? String(product.stock)}
+                        value={productInput.stock}
                         onChange={(event) =>
-                          setStockInputs((previous) => ({
+                          setProductInputs((previous) => ({
                             ...previous,
-                            [product.id]: event.target.value,
+                            [product.id]: { ...productInput, stock: event.target.value },
                           }))
                         }
-                        onBlur={(event) => void handleStockChange(product.id, event.target.value)}
                       />
                     </td>
-                    <td>{formatMoney(product.unit_price)}</td>
+                    <td>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={productInput.unitPrice}
+                        placeholder={formatMoney(product.unit_price)}
+                        onChange={(event) =>
+                          setProductInputs((previous) => ({
+                            ...previous,
+                            [product.id]: { ...productInput, unitPrice: event.target.value },
+                          }))
+                        }
+                      />
+                    </td>
+                    <td>
+                      <button type="button" onClick={() => void handleProductUpdate(product.id)}>
+                        Güncelle
+                      </button>
+                    </td>
                   </tr>
                 );
               })}

@@ -573,6 +573,35 @@ export async function updateProductStock(productId: number, newQuantity: number)
   await db.execute("UPDATE products SET stock = $1 WHERE id = $2;", [newQuantity, productId]);
 }
 
+export interface UpdateProductInput {
+  name: string;
+  sku?: string;
+  stock: number;
+  unitPrice?: number;
+}
+
+export async function updateProduct(productId: number, input: UpdateProductInput): Promise<void> {
+  const db = await getDb();
+  const name = input.name.trim();
+
+  if (!name) {
+    throw new Error("Product name cannot be empty.");
+  }
+
+  if (!Number.isInteger(input.stock) || input.stock < 0) {
+    throw new Error("Stock must be 0 or greater.");
+  }
+
+  if (input.unitPrice != null && (!Number.isFinite(input.unitPrice) || input.unitPrice < 0)) {
+    throw new Error("Unit price must be 0 or greater.");
+  }
+
+  await db.execute(
+    "UPDATE products SET name = $1, sku = $2, stock = $3, unit_price = $4 WHERE id = $5;",
+    [name, input.sku?.trim() || null, input.stock, input.unitPrice ?? null, productId],
+  );
+}
+
 export async function decreaseStock(productId: number, quantity: number): Promise<void> {
   const db = await getDb();
   validatePositiveAmount(quantity, "Quantity");
