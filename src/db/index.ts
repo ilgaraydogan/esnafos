@@ -634,7 +634,8 @@ export async function getTodaySalesTotal(): Promise<number> {
   const [row] = await db.select<Array<{ total: number | null }>>(
     `SELECT COALESCE(SUM(total_amount), 0) AS total
      FROM sales
-     WHERE date(created_at, 'localtime') = date('now', 'localtime');`,
+     WHERE created_at >= date('now', 'localtime')
+       AND created_at < date('now', 'localtime', '+1 day');`,
   );
 
   return row?.total ?? 0;
@@ -646,7 +647,8 @@ export async function getTodaySalesCount(): Promise<number> {
   const [row] = await db.select<Array<{ count: number }>>(
     `SELECT COUNT(*) AS count
      FROM sales
-     WHERE date(created_at, 'localtime') = date('now', 'localtime');`,
+     WHERE created_at >= date('now', 'localtime')
+       AND created_at < date('now', 'localtime', '+1 day');`,
   );
 
   return row?.count ?? 0;
