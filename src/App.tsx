@@ -35,6 +35,7 @@ export default function App() {
   const [dbReady, setDbReady] = useState<boolean>(false);
   const [dbError, setDbError] = useState<string | null>(null);
   const [showLowStockWarning, setShowLowStockWarning] = useState(false);
+  const [lowStockWarningShown, setLowStockWarningShown] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -67,7 +68,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (!dbReady || dbError) return;
+    if (!dbReady || dbError || lowStockWarningShown) return;
 
     let mounted = true;
 
@@ -76,6 +77,7 @@ export default function App() {
         const lowStockProducts = await getLowStockProducts(5);
         if (mounted && lowStockProducts.length > 0) {
           setShowLowStockWarning(true);
+          setLowStockWarningShown(true);
         }
       } catch {
         // Keep warning silent if low-stock check fails.
@@ -87,7 +89,7 @@ export default function App() {
     return () => {
       mounted = false;
     };
-  }, [dbReady, dbError]);
+  }, [dbReady, dbError, lowStockWarningShown]);
 
   const pageContent = useMemo(() => {
     switch (activePage) {

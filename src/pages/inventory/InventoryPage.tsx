@@ -272,6 +272,7 @@ export function InventoryPage({ dbReady, dbError }: InventoryPageProps) {
                           }))
                         }
                       />
+                      {isLowStock && <span className="low-stock-label">Düşük stok</span>}
                     </td>
                     <td>
                       <input
