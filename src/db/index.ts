@@ -49,7 +49,6 @@ export interface Sale {
 
 export interface SaleHistoryItem {
   id: number;
-  product_id: number;
   product_name: string;
   quantity: number;
   unit_price: number;
@@ -441,7 +440,6 @@ export async function getAllSales(): Promise<SaleHistoryItem[]> {
   return db.select<SaleHistoryItem[]>(
     `SELECT
       sales.id,
-      products.id AS product_id,
       sale_items.item_name AS product_name,
       sale_items.quantity,
       sale_items.unit_price,
@@ -449,7 +447,6 @@ export async function getAllSales(): Promise<SaleHistoryItem[]> {
       sales.created_at AS created_at
      FROM sales
      INNER JOIN sale_items ON sale_items.sale_id = sales.id
-     LEFT JOIN products ON products.name = sale_items.item_name
      ORDER BY sales.created_at DESC, sales.id DESC;`,
   );
 }
@@ -459,7 +456,6 @@ export async function getSaleById(id: number): Promise<SaleHistoryItem | null> {
   const rows = await db.select<SaleHistoryItem[]>(
     `SELECT
       sales.id,
-      products.id AS product_id,
       sale_items.item_name AS product_name,
       sale_items.quantity,
       sale_items.unit_price,
@@ -467,7 +463,6 @@ export async function getSaleById(id: number): Promise<SaleHistoryItem | null> {
       sales.created_at AS created_at
      FROM sales
      INNER JOIN sale_items ON sale_items.sale_id = sales.id
-     LEFT JOIN products ON products.name = sale_items.item_name
      WHERE sales.id = $1
      LIMIT 1;`,
     [id],
