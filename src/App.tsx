@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import "./App.css";
-import { initializeDatabase } from "./db";
+import { getLowStockProducts, initializeDatabase } from "./db";
 import { CustomersPage } from "./pages/customers/CustomersPage";
 import { CashPage } from "./pages/cash/CashPage";
 import { DashboardPage } from "./pages/dashboard/DashboardPage";
@@ -18,7 +18,7 @@ type NavItem = {
 };
 
 const navItems: NavItem[] = [
-  { key: "dashboard", label: "Dashboard" },
+  { key: "dashboard", label: "Genel Bakış" },
   { key: "landing", label: "Tanıtım" },
   { key: "customers", label: "Müşteriler" },
   { key: "ledger", label: "Veresiye" },
@@ -34,6 +34,8 @@ export default function App() {
   const [activePage, setActivePage] = useState<string>("dashboard");
   const [dbReady, setDbReady] = useState<boolean>(false);
   const [dbError, setDbError] = useState<string | null>(null);
+  const [showLowStockWarning, setShowLowStockWarning] = useState(false);
+  const [lowStockWarningShown, setLowStockWarningShown] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -64,6 +66,30 @@ export default function App() {
       mounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!dbReady || dbError || lowStockWarningShown) return;
+
+    let mounted = true;
+
+    const checkLowStock = async () => {
+      try {
+        const lowStockProducts = await getLowStockProducts(5);
+        if (mounted && lowStockProducts.length > 0) {
+          setShowLowStockWarning(true);
+          setLowStockWarningShown(true);
+        }
+      } catch {
+        // Keep warning silent if low-stock check fails.
+      }
+    };
+
+    void checkLowStock();
+
+    return () => {
+      mounted = false;
+    };
+  }, [dbReady, dbError, lowStockWarningShown]);
 
   const pageContent = useMemo(() => {
     switch (activePage) {
@@ -116,7 +142,10 @@ export default function App() {
         </nav>
       </aside>
 
-      <main className="content">{pageContent}</main>
+      <main className="content">
+        {showLowStockWarning && <p className="status warning">Düşük stokta ürünler var</p>}
+        {pageContent}
+      </main>
     </div>
   );
 }

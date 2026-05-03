@@ -232,8 +232,9 @@ export function InventoryPage({ dbReady, dbError }: InventoryPageProps) {
                   stock: String(product.stock),
                   unitPrice: product.unit_price == null ? "" : String(product.unit_price),
                 };
+                const isLowStock = product.stock <= 5;
                 return (
-                  <tr key={product.id}>
+                  <tr key={product.id} className={isLowStock ? "low-stock-row" : undefined}>
                     <td>
                       <input
                         type="text"
@@ -271,6 +272,7 @@ export function InventoryPage({ dbReady, dbError }: InventoryPageProps) {
                           }))
                         }
                       />
+                      {isLowStock && <span className="low-stock-label">Düşük stok</span>}
                     </td>
                     <td>
                       <input
