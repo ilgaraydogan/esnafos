@@ -553,11 +553,16 @@ export async function createProduct(input: NewProductInput): Promise<number> {
     ],
   );
 
-  if (result.lastInsertId == null) {
-    throw new Error("Failed to create product record.");
+  if (result.lastInsertId != null) {
+    return result.lastInsertId;
   }
 
-  return result.lastInsertId;
+  const [row] = await db.select<Array<{ id: number }>>("SELECT last_insert_rowid() AS id;");
+  if (!row?.id) {
+    throw new Error("Failed to create product record: insert id is missing.");
+  }
+
+  return row.id;
 }
 
 export async function getProducts(): Promise<Product[]> {
