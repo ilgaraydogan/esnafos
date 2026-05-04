@@ -168,6 +168,34 @@ function validateCashEntryType(type: string): asserts type is CashEntryType {
   }
 }
 
+
+async function getProductStockColumnPresence(
+  db: Database,
+): Promise<{ hasStock: boolean; hasStockQuantity: boolean }> {
+  const productColumns = await db.select<Array<{ name: string }>>("PRAGMA table_info(products);");
+
+  return {
+    hasStock: productColumns.some((column) => column.name === "stock"),
+    hasStockQuantity: productColumns.some((column) => column.name === "stock_quantity"),
+  };
+}
+
+function getProductStockSelectExpression(columns: { hasStock: boolean; hasStockQuantity: boolean }): string {
+  if (columns.hasStock && columns.hasStockQuantity) {
+    return "CAST(COALESCE(stock, stock_quantity, 0) AS INTEGER)";
+  }
+
+  if (columns.hasStock) {
+    return "CAST(COALESCE(stock, 0) AS INTEGER)";
+  }
+
+  if (columns.hasStockQuantity) {
+    return "CAST(COALESCE(stock_quantity, 0) AS INTEGER)";
+  }
+
+  return "0";
+}
+
 function validatePositiveAmount(amount: number, fieldName: string): void {
   if (!Number.isFinite(amount) || Number.isNaN(amount)) {
     throw new Error(`${fieldName} must be a valid number.`);
@@ -530,6 +558,7 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
 export async function createProduct(input: NewProductInput): Promise<number> {
   const db = await getDb();
   const name = input.name.trim();
+  const stockColumns = await getProductStockColumnPresence(db);
 
   if (!name) {
     throw new Error("Product name cannot be empty.");
@@ -544,13 +573,9 @@ export async function createProduct(input: NewProductInput): Promise<number> {
   }
 
   const result = await db.execute(
-    "INSERT INTO products (name, sku, stock, unit_price) VALUES ($1, $2, $3, $4);",
-    [
-      name,
-      input.sku?.trim() || null,
-      input.stock,
-      input.unitPrice ?? null,
-    ],
+    `INSERT INTO products (name, sku${stockColumns.hasStock ? ", stock" : ""}${stockColumns.hasStockQuantity ? ", stock_quantity" : ""}, unit_price)
+     VALUES ($1, $2${stockColumns.hasStock ? ", $3" : ""}${stockColumns.hasStockQuantity ? stockColumns.hasStock ? ", $3" : ", $3" : ""}, $4);`,
+    [name, input.sku?.trim() || null, input.stock, input.unitPrice ?? null],
   );
 
   if (result.lastInsertId != null) {
@@ -567,9 +592,11 @@ export async function createProduct(input: NewProductInput): Promise<number> {
 
 export async function getProducts(): Promise<Product[]> {
   const db = await getDb();
+  const stockColumns = await getProductStockColumnPresence(db);
+  const stockSelect = getProductStockSelectExpression(stockColumns);
 
   return db.select<Product[]>(
-    `SELECT id, name, sku, stock, unit_price, created_at
+    `SELECT id, name, sku, ${stockSelect} AS stock, unit_price, created_at
      FROM products
      ORDER BY created_at DESC;`,
   );
@@ -577,12 +604,24 @@ export async function getProducts(): Promise<Product[]> {
 
 export async function updateProductStock(productId: number, newQuantity: number): Promise<void> {
   const db = await getDb();
+  const stockColumns = await getProductStockColumnPresence(db);
 
   if (!Number.isInteger(newQuantity) || newQuantity < 0) {
     throw new Error("Stock must be 0 or greater.");
   }
 
-  await db.execute("UPDATE products SET stock = $1 WHERE id = $2;", [newQuantity, productId]);
+  const updates: string[] = [];
+  if (stockColumns.hasStock) {
+    updates.push("stock = $1");
+  }
+  if (stockColumns.hasStockQuantity) {
+    updates.push("stock_quantity = $1");
+  }
+  if (updates.length === 0) {
+    throw new Error("Products table does not have a stock column.");
+  }
+
+  await db.execute(`UPDATE products SET ${updates.join(", ")} WHERE id = $2;`, [newQuantity, productId]);
 }
 
 export interface UpdateProductInput {
@@ -595,6 +634,7 @@ export interface UpdateProductInput {
 export async function updateProduct(productId: number, input: UpdateProductInput): Promise<void> {
   const db = await getDb();
   const name = input.name.trim();
+  const stockColumns = await getProductStockColumnPresence(db);
 
   if (!name) {
     throw new Error("Product name cannot be empty.");
@@ -608,20 +648,36 @@ export async function updateProduct(productId: number, input: UpdateProductInput
     throw new Error("Unit price must be 0 or greater.");
   }
 
+  const stockUpdates: string[] = [];
+  if (stockColumns.hasStock) {
+    stockUpdates.push("stock = $3");
+  }
+  if (stockColumns.hasStockQuantity) {
+    stockUpdates.push("stock_quantity = $3");
+  }
+  if (stockUpdates.length === 0) {
+    throw new Error("Products table does not have a stock column.");
+  }
+
   await db.execute(
-    "UPDATE products SET name = $1, sku = $2, stock = $3, unit_price = $4 WHERE id = $5;",
+    `UPDATE products SET name = $1, sku = $2, ${stockUpdates.join(", ")}, unit_price = $4 WHERE id = $5;`,
     [name, input.sku?.trim() || null, input.stock, input.unitPrice ?? null, productId],
   );
 }
 
 export async function decreaseStock(productId: number, quantity: number): Promise<void> {
   const db = await getDb();
+  const stockColumns = await getProductStockColumnPresence(db);
+  const stockSelect = getProductStockSelectExpression(stockColumns);
   validatePositiveAmount(quantity, "Quantity");
   if (!Number.isInteger(quantity)) {
     throw new Error("Quantity must be an integer.");
   }
 
-  const [product] = await db.select<Array<{ stock: number }>>("SELECT stock FROM products WHERE id = $1;", [productId]);
+  const [product] = await db.select<Array<{ stock: number }>>(
+    `SELECT ${stockSelect} AS stock FROM products WHERE id = $1;`,
+    [productId],
+  );
   if (!product) {
     throw new Error("Selected product was not found.");
   }
@@ -629,7 +685,18 @@ export async function decreaseStock(productId: number, quantity: number): Promis
     throw new Error("Insufficient stock.");
   }
 
-  await db.execute("UPDATE products SET stock = stock - $1 WHERE id = $2;", [quantity, productId]);
+  const updates: string[] = [];
+  if (stockColumns.hasStock) {
+    updates.push("stock = stock - $1");
+  }
+  if (stockColumns.hasStockQuantity) {
+    updates.push("stock_quantity = stock_quantity - $1");
+  }
+  if (updates.length === 0) {
+    throw new Error("Products table does not have a stock column.");
+  }
+
+  await db.execute(`UPDATE products SET ${updates.join(", ")} WHERE id = $2;`, [quantity, productId]);
 }
 
 
@@ -661,16 +728,18 @@ export async function getTodaySalesCount(): Promise<number> {
 
 export async function getLowStockProducts(threshold = 5): Promise<LowStockProduct[]> {
   const db = await getDb();
+  const stockColumns = await getProductStockColumnPresence(db);
+  const stockSelect = getProductStockSelectExpression(stockColumns);
 
   if (!Number.isInteger(threshold) || threshold < 0) {
     throw new Error('Threshold must be an integer and 0 or greater.');
   }
 
   return db.select<LowStockProduct[]>(
-    `SELECT id, name, stock
+    `SELECT id, name, ${stockSelect} AS stock
      FROM products
-     WHERE stock <= $1
-     ORDER BY stock ASC, name ASC;`,
+     WHERE ${stockSelect} <= $1
+     ORDER BY ${stockSelect} ASC, name ASC;`,
     [threshold],
   );
 }
