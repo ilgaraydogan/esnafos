@@ -20,6 +20,16 @@ const initialFormState: ProductFormState = {
   unitPrice: "",
 };
 
+function getErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof Error && error.message) return error.message;
+  if (typeof error === "string" && error.trim()) return error;
+  try {
+    return JSON.stringify(error);
+  } catch {
+    return fallback;
+  }
+}
+
 function formatMoney(value: number | null): string {
   if (value == null) return "-";
   return value.toLocaleString("tr-TR", { style: "currency", currency: "TRY" });
@@ -57,7 +67,7 @@ export function InventoryPage({ dbReady, dbError }: InventoryPageProps) {
         ),
       );
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Ürünler yüklenemedi.");
+      setErrorMessage(getErrorMessage(error, "Ürünler yüklenemedi."));
     } finally {
       setIsLoading(false);
     }
@@ -103,7 +113,7 @@ export function InventoryPage({ dbReady, dbError }: InventoryPageProps) {
       setFormState(initialFormState);
       await loadProducts();
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Ürün kaydedilemedi.");
+      setErrorMessage(getErrorMessage(error, "Ürün kaydedilemedi."));
     } finally {
       setIsSubmitting(false);
     }
@@ -139,7 +149,7 @@ export function InventoryPage({ dbReady, dbError }: InventoryPageProps) {
       });
       await loadProducts();
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Ürün güncellenemedi.");
+      setErrorMessage(getErrorMessage(error, "Ürün güncellenemedi."));
     }
   };
 
