@@ -572,10 +572,28 @@ export async function createProduct(input: NewProductInput): Promise<number> {
     throw new Error("Unit price must be 0 or greater.");
   }
 
+  const columns = ["name", "sku"] as string[];
+  const values: Array<string | number | null> = [name, input.sku?.trim() || null];
+
+  if (stockColumns.hasStock) {
+    columns.push("stock");
+    values.push(input.stock);
+  }
+  if (stockColumns.hasStockQuantity) {
+    columns.push("stock_quantity");
+    values.push(input.stock);
+  }
+  if (!stockColumns.hasStock && !stockColumns.hasStockQuantity) {
+    throw new Error("Products table does not have a stock or stock_quantity column.");
+  }
+
+  columns.push("unit_price");
+  values.push(input.unitPrice ?? null);
+  const placeholders = values.map((_, index) => `$${index + 1}`).join(", ");
+
   const result = await db.execute(
-    `INSERT INTO products (name, sku${stockColumns.hasStock ? ", stock" : ""}${stockColumns.hasStockQuantity ? ", stock_quantity" : ""}, unit_price)
-     VALUES ($1, $2${stockColumns.hasStock ? ", $3" : ""}${stockColumns.hasStockQuantity ? stockColumns.hasStock ? ", $3" : ", $3" : ""}, $4);`,
-    [name, input.sku?.trim() || null, input.stock, input.unitPrice ?? null],
+    `INSERT INTO products (${columns.join(", ")}) VALUES (${placeholders});`,
+    values,
   );
 
   if (result.lastInsertId != null) {
