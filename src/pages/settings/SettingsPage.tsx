@@ -2,11 +2,11 @@ import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { open, save } from "@tauri-apps/plugin-dialog";
 import { closeDatabase } from "../../db";
-import packageJson from "../../../package.json";
 
 const BUSINESS_NAME_KEY = "esnafos_business_name";
 const THEME_KEY = "esnafos_theme";
 const ACCENT_KEY = "esnafos_accent";
+const APP_VERSION = "0.1.0";
 
 type SettingsPageProps = {
   onRestartOnboarding: () => void;
@@ -150,7 +150,7 @@ export function SettingsPage({ onRestartOnboarding }: SettingsPageProps) {
         </button>
       </div>
 
-      <p className="status">Sürüm: v{packageJson.version}</p>
+      <p className="status">Sürüm: v{APP_VERSION}</p>
 
       {statusType !== "idle" && (
         <p className="status" style={{ color: statusType === "success" ? "#0f9d58" : "#d93025" }}>

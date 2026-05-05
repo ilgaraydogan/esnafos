@@ -9,6 +9,8 @@
   --panel-bg: rgba(255, 255, 255, 0.7);
   --panel-strong: rgba(255, 255, 255, 0.82);
   --accent-color: #4f46e5;
+  --accent-soft-bg: rgba(79, 70, 229, 0.16);
+  --accent-soft-border: rgba(79, 70, 229, 0.35);
 }
 
 * { box-sizing: border-box; }
@@ -55,8 +57,8 @@ body[data-theme="dark"] {
 }
 .nav-button:hover { background: var(--panel-strong); }
 .nav-button.active {
-  background: color-mix(in srgb, var(--accent-color) 15%, transparent);
-  border-color: color-mix(in srgb, var(--accent-color) 40%, transparent);
+  background: var(--accent-soft-bg);
+  border-color: var(--accent-soft-border);
   color: var(--text-main);
   font-weight: 600;
 }
@@ -111,4 +113,19 @@ input, select, textarea {
 @media (max-width: 900px) {
   .app-shell { grid-template-columns: 1fr; }
   .content { padding: 0; }
+}
+
+.low-stock-row {
+  background: #fffbeb;
+  border-left: 3px solid #dc2626;
+}
+
+.low-stock-label {
+  display: inline-block;
+  margin-left: 0.5rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  color: #b91c1c;
+  background: #fee2e2;
 }
