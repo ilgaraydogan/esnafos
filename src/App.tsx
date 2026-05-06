@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import "./App.css";
 import { getLowStockProducts, initializeDatabase } from "./db";
 import { CustomersPage } from "./pages/customers/CustomersPage";
@@ -173,7 +174,17 @@ export default function App() {
         ) : (
           <>
             {showLowStockWarning && <p className="status warning">Düşük stokta ürünler var</p>}
-            {pageContent}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activePage}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.18, ease: "easeOut" }}
+              >
+                {pageContent}
+              </motion.div>
+            </AnimatePresence>
           </>
         )}
       </main>
