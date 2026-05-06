@@ -4,6 +4,7 @@ import {
   Customer,
   getCustomers,
 } from "../../db";
+import { Button, Card, Input, Label } from "../../components/ui";
 
 type CustomersPageProps = {
   dbReady: boolean;
@@ -105,16 +106,16 @@ export function CustomersPage({ dbReady, dbError }: CustomersPageProps) {
   });
 
   return (
-    <section className="page">
-      <h1>Müşteriler</h1>
+    <section className="page page-grid">
+      <header className="page-header"><h1>Müşteriler</h1><p>Müşteri listenizi yönetin ve hızlıca arayın.</p></header>
 
       {dbError && <p className="status error">Veritabanı hatası: {dbError}</p>}
       {!dbError && !dbReady && <p className="status">Veritabanı hazırlanıyor…</p>}
 
-      <form className="customer-form" onSubmit={handleSubmit}>
-        <label>
+      <Card className="glass-card"><form className="customer-form field-grid" onSubmit={handleSubmit}>
+        <Label>
           Ad Soyad *
-          <input
+          <Input
             type="text"
             value={formState.name}
             onChange={(event) =>
@@ -126,11 +127,11 @@ export function CustomersPage({ dbReady, dbError }: CustomersPageProps) {
             required
             disabled={!dbReady || !!dbError || isSubmitting}
           />
-        </label>
+        </Label>
 
-        <label>
+        <Label>
           Telefon
-          <input
+          <Input
             type="text"
             value={formState.phone}
             onChange={(event) =>
@@ -141,9 +142,9 @@ export function CustomersPage({ dbReady, dbError }: CustomersPageProps) {
             }
             disabled={!dbReady || !!dbError || isSubmitting}
           />
-        </label>
+        </Label>
 
-        <label>
+        <Label>
           Not
           <textarea
             rows={3}
@@ -156,26 +157,26 @@ export function CustomersPage({ dbReady, dbError }: CustomersPageProps) {
             }
             disabled={!dbReady || !!dbError || isSubmitting}
           />
-        </label>
+        </Label>
 
-        <button
+        <Button
           type="submit"
           disabled={!dbReady || !!dbError || isSubmitting}
         >
           {isSubmitting ? "Kaydediliyor..." : "Müşteri Ekle"}
-        </button>
-      </form>
+        </Button>
+      </form></Card>
 
-      <label className="search-input-wrap">
+      <Card className="glass-card"><Label className="search-input-wrap">
         Müşteri Ara
-        <input
+        <Input
           type="text"
           placeholder="Ad veya telefon ile ara"
           value={searchText}
           onChange={(event) => setSearchText(event.target.value)}
           disabled={!dbReady || !!dbError || isLoading}
         />
-      </label>
+      </Label></Card>
 
       {errorMessage && <p className="status error">{errorMessage}</p>}
       {isLoading && <p className="status">Müşteriler hazırlanıyor, lütfen bekleyin…</p>}
@@ -190,7 +191,7 @@ export function CustomersPage({ dbReady, dbError }: CustomersPageProps) {
 
       {filteredCustomers.length > 0 && (
         <div className="table-wrap">
-          <table className="customers-table">
+          <table className="customers-table table-clean">
             <thead>
               <tr>
                 <th>Ad Soyad</th>

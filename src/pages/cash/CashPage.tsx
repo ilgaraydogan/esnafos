@@ -1,5 +1,6 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { addCashEntry, CashEntry, CashEntryType, getCashEntries, getTotalCashBalance } from "../../db";
+import { Button, Card, Input, Label } from "../../components/ui";
 
 type CashPageProps = {
   dbReady: boolean;
@@ -80,7 +81,7 @@ export function CashPage({ dbReady, dbError }: CashPageProps) {
   };
 
   return (
-    <section className="page">
+    <section className="page page-grid">
       <h1>Kasa</h1>
       <p className="ledger-balance">Toplam Bakiye: <strong>{formatAmount(totalBalance)}</strong></p>
 
@@ -89,8 +90,8 @@ export function CashPage({ dbReady, dbError }: CashPageProps) {
       {errorMessage && <p className="status error">{errorMessage}</p>}
       {successMessage && <p className="status success">{successMessage}</p>}
 
-      <form className="customer-form" onSubmit={handleSubmit}>
-        <label>
+      <Card className="glass-card"><form className="customer-form field-grid" onSubmit={handleSubmit}>
+        <Label>
           Tür
           <select
             value={formState.type}
@@ -102,11 +103,11 @@ export function CashPage({ dbReady, dbError }: CashPageProps) {
             <option value="income">Gelir</option>
             <option value="expense">Gider</option>
           </select>
-        </label>
+        </Label>
 
-        <label>
+        <Label>
           Tutar *
-          <input
+          <Input
             type="number"
             min="0.01"
             step="0.01"
@@ -114,9 +115,9 @@ export function CashPage({ dbReady, dbError }: CashPageProps) {
             onChange={(event) => setFormState((previous) => ({ ...previous, amount: event.target.value }))}
             disabled={!dbReady || !!dbError || isSubmitting}
           />
-        </label>
+        </Label>
 
-        <label>
+        <Label>
           Not
           <textarea
             rows={3}
@@ -124,14 +125,14 @@ export function CashPage({ dbReady, dbError }: CashPageProps) {
             onChange={(event) => setFormState((previous) => ({ ...previous, note: event.target.value }))}
             disabled={!dbReady || !!dbError || isSubmitting}
           />
-        </label>
+        </Label>
 
-        <button type="submit" disabled={!dbReady || !!dbError || isSubmitting}>
+        <Button type="submit" disabled={!dbReady || !!dbError || isSubmitting}>
           {isSubmitting ? "Kaydediliyor..." : "Kasa Hareketi Ekle"}
-        </button>
-      </form>
+        </Button>
+      </form></Card>
 
-      <section className="panel">
+      <Card className="glass-card">
         <h2>Kasa Hareketleri</h2>
         {entries.length === 0 ? (
           <p>Henüz kasa hareketi yok.</p>
@@ -147,7 +148,7 @@ export function CashPage({ dbReady, dbError }: CashPageProps) {
             ))}
           </ul>
         )}
-      </section>
+      </Card>
     </section>
   );
 }
