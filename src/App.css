@@ -157,3 +157,27 @@ body[data-theme="dark"] .status.error {
   color: #b91c1c;
   background: #fee2e2;
 }
+
+.ui-button {
+  border: 1px solid var(--accent-color);
+  background: var(--accent-color);
+  color: #fff;
+  padding: 0.58rem 0.95rem;
+  border-radius: 0.65rem;
+  cursor: pointer;
+}
+.ui-button.secondary { background: transparent; color: var(--text-main); border-color: var(--border-soft); }
+.ui-input {
+  border: 1px solid var(--border-soft);
+  background: var(--panel-bg);
+  color: var(--text-main);
+  border-radius: 0.65rem;
+  padding: 0.55rem 0.65rem;
+}
+.ui-label { display: grid; gap: 0.35rem; }
+.ui-card {
+  background: var(--panel-strong);
+  border: 1px solid var(--border-soft);
+  border-radius: 1.25rem;
+  padding: 1.5rem;
+}
