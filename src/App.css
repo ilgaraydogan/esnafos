@@ -181,3 +181,13 @@ body[data-theme="dark"] .status.error {
   border-radius: 1.25rem;
   padding: 1.5rem;
 }
+
+.page-header { margin-bottom: 1rem; }
+.page-header p { margin: 0.35rem 0 0; }
+.page-grid { display: grid; gap: 1rem; }
+.glass-section { background: var(--panel-bg); border: 1px solid var(--border-soft); border-radius: 1rem; padding: 1rem; }
+.table-clean th { font-weight: 600; color: var(--text-muted); }
+.table-clean td,.table-clean th { padding: 0.7rem 0.6rem; }
+.empty-state { border: 1px dashed var(--border-soft); border-radius: 0.9rem; padding: 1rem; color: var(--text-muted); background: var(--panel-bg); }
+.form-actions { display: flex; gap: 0.6rem; margin-top: 0.35rem; }
+.field-grid { display: grid; gap: 0.7rem; }

@@ -1,5 +1,6 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { createProduct, getProducts, Product, updateProduct } from "../../db";
+import { Button, Card, Input, Label } from "../../components/ui";
 
 type InventoryPageProps = {
   dbReady: boolean;
@@ -154,17 +155,17 @@ export function InventoryPage({ dbReady, dbError }: InventoryPageProps) {
   };
 
   return (
-    <section className="page">
+    <section className="page page-grid">
       <h1>Stok Yönetimi</h1>
       <p>Ürünlerinizi ekleyin ve düşük stokları takip edin.</p>
 
       {dbError && <p className="status error">Veritabanı hatası: {dbError}</p>}
       {!dbError && !dbReady && <p className="status">Veritabanı hazırlanıyor…</p>}
 
-      <form className="customer-form" onSubmit={handleSubmit}>
-        <label>
+      <Card className="glass-card"><form className="customer-form field-grid" onSubmit={handleSubmit}>
+        <Label>
           Ürün Adı *
-          <input
+          <Input
             type="text"
             value={formState.name}
             onChange={(event) =>
@@ -172,11 +173,11 @@ export function InventoryPage({ dbReady, dbError }: InventoryPageProps) {
             }
             disabled={!dbReady || !!dbError || isSubmitting}
           />
-        </label>
+        </Label>
 
-        <label>
+        <Label>
           SKU
-          <input
+          <Input
             type="text"
             value={formState.sku}
             onChange={(event) =>
@@ -184,11 +185,11 @@ export function InventoryPage({ dbReady, dbError }: InventoryPageProps) {
             }
             disabled={!dbReady || !!dbError || isSubmitting}
           />
-        </label>
+        </Label>
 
-        <label>
+        <Label>
           Stok Adedi *
-          <input
+          <Input
             type="number"
             min="0"
             step="1"
@@ -198,11 +199,11 @@ export function InventoryPage({ dbReady, dbError }: InventoryPageProps) {
             }
             disabled={!dbReady || !!dbError || isSubmitting}
           />
-        </label>
+        </Label>
 
-        <label>
+        <Label>
           Birim Fiyat (₺)
-          <input
+          <Input
             type="number"
             min="0"
             step="0.01"
@@ -212,19 +213,19 @@ export function InventoryPage({ dbReady, dbError }: InventoryPageProps) {
             }
             disabled={!dbReady || !!dbError || isSubmitting}
           />
-        </label>
+        </Label>
 
-        <button type="submit" disabled={!dbReady || !!dbError || isSubmitting}>
+        <Button type="submit" disabled={!dbReady || !!dbError || isSubmitting}>
           {isSubmitting ? "Kaydediliyor..." : "Ürün Ekle"}
-        </button>
-      </form>
+        </Button>
+      </form></Card>
 
       {errorMessage && <p className="status error">{errorMessage}</p>}
       {isLoading && <p className="status">Ürünler yükleniyor…</p>}
 
       {products.length > 0 && (
         <div className="table-wrap">
-          <table className="customers-table">
+          <table className="customers-table table-clean">
             <thead>
               <tr>
                 <th>Ürün</th>
@@ -246,7 +247,7 @@ export function InventoryPage({ dbReady, dbError }: InventoryPageProps) {
                 return (
                   <tr key={product.id} className={isLowStock ? "low-stock-row" : undefined}>
                     <td>
-                      <input
+                      <Input
                         type="text"
                         value={productInput.name}
                         onChange={(event) =>
@@ -258,7 +259,7 @@ export function InventoryPage({ dbReady, dbError }: InventoryPageProps) {
                       />
                     </td>
                     <td>
-                      <input
+                      <Input
                         type="text"
                         value={productInput.sku}
                         onChange={(event) =>
@@ -270,7 +271,7 @@ export function InventoryPage({ dbReady, dbError }: InventoryPageProps) {
                       />
                     </td>
                     <td>
-                      <input
+                      <Input
                         type="number"
                         min="0"
                         step="1"
@@ -285,7 +286,7 @@ export function InventoryPage({ dbReady, dbError }: InventoryPageProps) {
                       {isLowStock && <span className="low-stock-label">Düşük stok</span>}
                     </td>
                     <td>
-                      <input
+                      <Input
                         type="number"
                         min="0"
                         step="0.01"
@@ -300,9 +301,9 @@ export function InventoryPage({ dbReady, dbError }: InventoryPageProps) {
                       />
                     </td>
                     <td>
-                      <button type="button" onClick={() => void handleProductUpdate(product.id)}>
+                      <Button type="button" onClick={() => void handleProductUpdate(product.id)}>
                         Güncelle
-                      </button>
+                      </Button>
                     </td>
                   </tr>
                 );

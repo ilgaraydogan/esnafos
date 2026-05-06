@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { getAllSales, getSaleById, SaleHistoryItem } from "../../db";
+import { Card } from "../../components/ui";
 
 type SalesHistoryPageProps = {
   dbReady: boolean;
@@ -69,7 +70,7 @@ export function SalesHistoryPage({ dbReady, dbError }: SalesHistoryPageProps) {
   };
 
   return (
-    <section className="page">
+    <section className="page page-grid">
       <h1>Satış Geçmişi</h1>
       {dbError && <p className="status error">Veritabanı hatası: {dbError}</p>}
       {!dbError && !dbReady && <p className="status">Veritabanı hazırlanıyor…</p>}
@@ -82,7 +83,7 @@ export function SalesHistoryPage({ dbReady, dbError }: SalesHistoryPageProps) {
 
       {sales.length > 0 && (
         <div className="table-wrap">
-          <table className="customers-table">
+          <table className="customers-table table-clean">
             <thead>
               <tr>
                 <th>Ürün</th>
@@ -106,14 +107,14 @@ export function SalesHistoryPage({ dbReady, dbError }: SalesHistoryPageProps) {
       )}
 
       {selectedSale && (
-        <section className="detail-card">
+        <Card className="detail-card glass-card">
           <h2>Fiş Detayı</h2>
           <p><strong>Ürün:</strong> {selectedSale.product_name}</p>
           <p><strong>Miktar:</strong> {selectedSale.quantity}</p>
           <p><strong>Birim Fiyat:</strong> {formatAmount(selectedSale.unit_price)}</p>
           <p><strong>Toplam:</strong> {formatAmount(selectedSale.total)}</p>
           <p><strong>Tarih:</strong> {formatCreatedAt(selectedSale.created_at)}</p>
-        </section>
+        </Card>
       )}
     </section>
   );

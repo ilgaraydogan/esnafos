@@ -5,6 +5,7 @@ import {
   getTodaySalesTotal,
   type LowStockProduct,
 } from "../../db";
+import { Card } from "../../components/ui";
 
 type DashboardPageProps = {
   dbReady: boolean;
@@ -69,7 +70,7 @@ export function DashboardPage({ dbReady, dbError }: DashboardPageProps) {
   }, [dbError, dbReady]);
 
   return (
-    <section className="page">
+    <section className="page page-grid">
       <h1>Dashboard</h1>
       <p>Günlük özet.</p>
 
@@ -81,22 +82,22 @@ export function DashboardPage({ dbReady, dbError }: DashboardPageProps) {
       {dbReady && !dbError && !loading && !error && (
         <>
           <div className="dashboard-cards" aria-label="Dashboard günlük özet kartları">
-            <article className="summary-card">
+            <Card className="summary-card glass-card">
               <h2>Bugünkü Toplam Satış</h2>
               <p>{moneyFormatter.format(todaySalesTotal)}</p>
-            </article>
+            </Card>
 
-            <article className="summary-card">
+            <Card className="summary-card glass-card">
               <h2>Bugünkü Satış Sayısı</h2>
               <p>{todaySalesCount}</p>
-            </article>
+            </Card>
           </div>
 
           <h2>Düşük Stok Ürünleri</h2>
           {lowStockProducts.length === 0 ? (
             <p>Düşük stokta ürün yok.</p>
           ) : (
-            <div className="card" style={{ marginTop: "0.75rem" }}>
+            <Card className="glass-card" style={{ marginTop: "0.75rem" }}>
               <table>
                 <thead>
                   <tr>
@@ -113,7 +114,7 @@ export function DashboardPage({ dbReady, dbError }: DashboardPageProps) {
                   ))}
                 </tbody>
               </table>
-            </div>
+            </Card>
           )}
         </>
       )}

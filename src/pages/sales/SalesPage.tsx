@@ -11,6 +11,7 @@ import {
   Sale,
   SaleItem,
 } from "../../db";
+import { Button, Card, Input, Label } from "../../components/ui";
 
 type SalesPageProps = {
   dbReady: boolean;
@@ -167,15 +168,15 @@ export function SalesPage({ dbReady, dbError }: SalesPageProps) {
   };
 
   return (
-    <section className="page">
+    <section className="page page-grid">
       <h1>Satış Fişi</h1>
       <p className="status warning">Bu fiş resmi mali belge değildir.</p>
 
       {dbError && <p className="status error">Veritabanı hatası: {dbError}</p>}
       {!dbError && !dbReady && <p className="status">Veritabanı hazırlanıyor…</p>}
 
-      <form className="customer-form" onSubmit={handleSubmit}>
-        <label>
+      <Card className="glass-card"><form className="customer-form field-grid" onSubmit={handleSubmit}>
+        <Label>
           Müşteri (Opsiyonel)
           <select
             value={formState.customerId}
@@ -191,9 +192,9 @@ export function SalesPage({ dbReady, dbError }: SalesPageProps) {
               </option>
             ))}
           </select>
-        </label>
+        </Label>
 
-        <label>
+        <Label>
           Ürün *
           <select
             value={formState.productId}
@@ -209,11 +210,11 @@ export function SalesPage({ dbReady, dbError }: SalesPageProps) {
               </option>
             ))}
           </select>
-        </label>
+        </Label>
 
-        <label>
+        <Label>
           Miktar *
-          <input
+          <Input
             type="number"
             min="1"
             step="1"
@@ -223,9 +224,9 @@ export function SalesPage({ dbReady, dbError }: SalesPageProps) {
             }
             disabled={!dbReady || !!dbError || isSubmitting}
           />
-        </label>
+        </Label>
 
-        <label>
+        <Label>
           Ödeme Tipi *
           <select
             value={formState.paymentType}
@@ -241,9 +242,9 @@ export function SalesPage({ dbReady, dbError }: SalesPageProps) {
             <option value="card">Kart</option>
             <option value="credit">Veresiye</option>
           </select>
-        </label>
+        </Label>
 
-        <label>
+        <Label>
           Not
           <textarea
             rows={3}
@@ -253,14 +254,14 @@ export function SalesPage({ dbReady, dbError }: SalesPageProps) {
             }
             disabled={!dbReady || !!dbError || isSubmitting}
           />
-        </label>
+        </Label>
 
         <p className="ledger-balance">Toplam: <strong>{formatAmount(total)}</strong></p>
 
-        <button type="submit" disabled={!dbReady || !!dbError || isSubmitting}>
+        <Button type="submit" disabled={!dbReady || !!dbError || isSubmitting}>
           {isSubmitting ? "Kaydediliyor..." : "Satış Oluştur"}
-        </button>
-      </form>
+        </Button>
+      </form></Card>
 
       {errorMessage && <p className="status error">{errorMessage}</p>}
       {successMessage && <p className="status">{successMessage}</p>}
@@ -272,7 +273,7 @@ export function SalesPage({ dbReady, dbError }: SalesPageProps) {
 
       {sales.length > 0 && (
         <div className="table-wrap">
-          <table className="customers-table">
+          <table className="customers-table table-clean">
             <thead>
               <tr>
                 <th>Tarih</th>
@@ -302,7 +303,7 @@ export function SalesPage({ dbReady, dbError }: SalesPageProps) {
       )}
 
       {selectedSale && (
-        <section className="detail-card">
+        <Card className="detail-card glass-card">
           <h2>Satış Detayı</h2>
           <p><strong>Ürün/Hizmet:</strong> {selectedSaleItem?.item_name ?? "-"}</p>
           <p><strong>Miktar:</strong> {selectedSaleItem?.quantity ?? "-"}</p>
@@ -312,7 +313,7 @@ export function SalesPage({ dbReady, dbError }: SalesPageProps) {
           <p><strong>Müşteri:</strong> {selectedSale.customer_name ?? "-"}</p>
           <p><strong>Not:</strong> {selectedSale.note || "-"}</p>
           <p><strong>Tarih:</strong> {formatCreatedAt(selectedSale.created_at)}</p>
-        </section>
+        </Card>
       )}
     </section>
   );
