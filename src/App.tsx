@@ -11,6 +11,7 @@ import { OrdersPage } from "./pages/orders/OrdersPage";
 import { SalesPage } from "./pages/sales/SalesPage";
 import { SalesHistoryPage } from "./pages/sales-history/SalesHistoryPage";
 import { SettingsPage } from "./pages/settings/SettingsPage";
+import { Button, Card } from "./components/ui";
 
 type NavItem = {
   key: string;
@@ -211,19 +212,19 @@ function Onboarding({ onFinish }: { onFinish: () => void }) {
   const isLastStep = step === steps.length - 1;
 
   return (
-    <section className="page glass-card onboarding-page">
+    <Card className="page glass-card onboarding-page">
       <p className="onboarding-step">Adım {step + 1} / {steps.length}</p>
       <h1>{steps[step].title}</h1>
       <p>{steps[step].text}</p>
 
       <div className="onboarding-actions">
         {step > 0 && (
-          <button type="button" className="secondary" onClick={() => setStep((prev) => prev - 1)}>
+          <Button type="button" variant="secondary" onClick={() => setStep((prev) => prev - 1)}>
             Geri
-          </button>
+          </Button>
         )}
 
-        <button
+        <Button
           type="button"
           onClick={() => {
             if (isLastStep) {
@@ -234,8 +235,8 @@ function Onboarding({ onFinish }: { onFinish: () => void }) {
           }}
         >
           {isLastStep ? "Genel Bakış'a Geç" : "Devam"}
-        </button>
+        </Button>
       </div>
-    </section>
+    </Card>
   );
 }
