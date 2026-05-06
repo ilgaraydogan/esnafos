@@ -2,6 +2,10 @@ import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { open, save } from "@tauri-apps/plugin-dialog";
 import { closeDatabase } from "../../db";
+import { Button } from "../../components/ui/Button";
+import { Card } from "../../components/ui/Card";
+import { Input } from "../../components/ui/Input";
+import { Label } from "../../components/ui/Label";
 
 const BUSINESS_NAME_KEY = "esnafos_business_name";
 const THEME_KEY = "esnafos_theme";
@@ -96,14 +100,14 @@ export function SettingsPage({ onRestartOnboarding }: SettingsPageProps) {
   };
 
   return (
-    <section className="page glass-card">
+    <Card className="page glass-card">
       <h1>Ayarlar</h1>
       <p>Uygulama görünümünü ve yerel ayarları buradan yönetebilirsiniz.</p>
 
       <div className="settings-grid">
-        <label>
+        <Label>
           İşletme Adı
-          <input
+          <Input
             value={businessName}
             onChange={(event) => {
               setBusinessName(event.target.value);
@@ -111,7 +115,7 @@ export function SettingsPage({ onRestartOnboarding }: SettingsPageProps) {
             }}
             placeholder="Örn. Yıldız Market"
           />
-        </label>
+        </Label>
 
         <label>
           Tema
@@ -125,7 +129,7 @@ export function SettingsPage({ onRestartOnboarding }: SettingsPageProps) {
           <p>Vurgu Rengi</p>
           <div className="accent-palette">
             {["#4f46e5", "#0284c7", "#059669", "#d97706", "#dc2626"].map((color) => (
-              <button
+              <Button
                 key={color}
                 type="button"
                 aria-label={`Vurgu rengi ${color}`}
@@ -139,15 +143,15 @@ export function SettingsPage({ onRestartOnboarding }: SettingsPageProps) {
       </div>
 
       <div className="settings-actions">
-        <button type="button" onClick={handleBackup}>
+        <Button type="button" onClick={handleBackup}>
           Yedek Al
-        </button>
-        <button type="button" className="secondary" onClick={handleRestore}>
+        </Button>
+        <Button type="button" variant="secondary" onClick={handleRestore}>
           Yedek Yükle
-        </button>
-        <button type="button" className="secondary" onClick={onRestartOnboarding}>
+        </Button>
+        <Button type="button" variant="secondary" onClick={onRestartOnboarding}>
           Onboarding'i Yeniden Göster
-        </button>
+        </Button>
       </div>
 
       <p className="status">Sürüm: v{APP_VERSION}</p>
@@ -157,6 +161,6 @@ export function SettingsPage({ onRestartOnboarding }: SettingsPageProps) {
           {statusMessage}
         </p>
       )}
-    </section>
+    </Card>
   );
 }

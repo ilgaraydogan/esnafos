@@ -119,6 +119,44 @@ body[data-theme="dark"] .status.error {
   background: rgba(239, 68, 68, 0.2);
   border-color: rgba(252, 165, 165, 0.38);
 }
+
+.ui-card {
+  border: 1px solid var(--border-soft);
+  background: var(--panel-strong);
+  border-radius: 1.25rem;
+}
+
+.ui-button {
+  border: 1px solid var(--accent-color);
+  border-radius: 0.65rem;
+  padding: 0.58rem 0.95rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.ui-button-default {
+  background: var(--accent-color);
+  color: #fff;
+}
+
+.ui-button-secondary {
+  background: transparent;
+  color: var(--text-main);
+  border-color: var(--border-soft);
+}
+
+.ui-input {
+  border: 1px solid var(--border-soft);
+  background: var(--panel-bg);
+  color: var(--text-main);
+  border-radius: 0.65rem;
+  padding: 0.55rem 0.65rem;
+}
+
+.ui-label {
+  display: grid;
+  gap: 0.35rem;
+}
 .customer-form,.search-input-wrap{ margin-top:1rem; display:grid; gap:.55rem; max-width:520px; }
 .table-wrap { margin-top:1rem; overflow-x:auto; }
 .customers-table { width:100%; border-collapse:collapse; }
